@@ -75,6 +75,7 @@
 }
 
 .chatInput {
+    color: #555;
     flex: 1;
     padding: 12px;
     border: 1px solid #eae3f8;
@@ -83,10 +84,15 @@
     background-color: #f4f2f8;
 }
 
+    .chatInput:focus {
+        outline: none;
+        box-shadow: 0 0 0 1px rgb(229, 206, 235, 0.7);
+    }
+
 .sendButton {
     padding: 12px 18px;
     background-color: #eae3f8;
-    color: #777777;
+    color: #555;
     border: none;
     border-radius: 6px;
     font-size: 1rem;
