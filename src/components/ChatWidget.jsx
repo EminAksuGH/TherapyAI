@@ -329,19 +329,19 @@ These are the kinds of warm, human responses you should provide when the user op
                         <p>{msg.text}</p>
                     </div>
                 ))}
-                {loading && <p className={styles.loadingMessage}>AI is typing...</p>}
+                {loading && <p className={styles.loadingMessage}>Yazıyor...</p>}
                 <div ref={messagesEndRef} />
             </div>
             <form onSubmit={handleSubmit} className={styles.chatForm}>
                 <input
                     type="text"
-                    placeholder="Type your message..."
+                    placeholder="Mesaj yazın..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     className={styles.chatInput}
                 />
                 <button type="submit" className={styles.sendButton} disabled={loading}>
-                    {loading ? "Sending..." : "Send"}
+                    {loading ? "Gönderiliyor..." : "Gönder"}
                 </button>
             </form>
         </div>
