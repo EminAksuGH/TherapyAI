@@ -2,27 +2,27 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 30px;
-    background-color: #e6d77c;
-    color: white;
+    background-color: #f4f2f8;
+    padding: 20px 40px;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .logo {
-    width: 512px;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #6a4c93;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-.navList {
-    list-style: none;
-    display: flex;
-    gap: 20px;
+.nav a {
+    margin-left: 24px;
+    text-decoration: none;
+    color: #444;
+    font-weight: 500;
+    transition: color 0.2s ease;
 }
 
-    .navList li a {
-        color: white;
-        text-decoration: none;
-        font-weight: bold;
+    .nav a:hover {
+        color: #6a4c93;
     }
-
-        .navList li a:hover {
-            text-decoration: underline;
-        }

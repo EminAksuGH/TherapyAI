@@ -1,17 +1,14 @@
-import React from 'react';
+﻿import styles from './Header.module.css';
 import { Link } from 'react-router-dom';
-import styles from './Header.module.css'; 
 
 const Header = () => {
     return (
         <header className={styles.header}>
-            <img src="./assets/logo.png" alt="Logo" className={styles.logo} />
-            <nav>
-                <ul className={styles.navList}>
-                    <li><Link to="/">Home</Link></li>
-                    <li><Link to="/support">Support</Link></li>
-                    <li><Link to="/about">About</Link></li>
-                </ul>
+            <div className={styles.logo}>TherapyAI</div>
+            <nav className={styles.nav}>
+                <Link to="/">Ana Sayfa</Link>
+                <Link to="/about">Hakkında</Link>
+                <Link to="/support">Destek</Link>
             </nav>
         </header>
     );

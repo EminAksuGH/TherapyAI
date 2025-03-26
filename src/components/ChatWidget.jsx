@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { franc } from "franc-min";
 import styles from "./ChatWidget.module.css";
@@ -7,12 +7,20 @@ const ChatWidget = () => {
     const [message, setMessage] = useState("");
     const [chatLog, setChatLog] = useState([]);
     const [loading, setLoading] = useState(false);
+    const messagesEndRef = useRef(null);
     const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
     const detectLanguage = (text) => {
         const lang = franc(text);
         return lang === "und" ? "en" : lang;
     };
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+    useEffect(() => {
+        scrollToBottom();
+    }, [chatLog]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -322,6 +330,7 @@ These are the kinds of warm, human responses you should provide when the user op
                     </div>
                 ))}
                 {loading && <p className={styles.loadingMessage}>AI is typing...</p>}
+                <div ref={messagesEndRef} />
             </div>
             <form onSubmit={handleSubmit} className={styles.chatForm}>
                 <input
