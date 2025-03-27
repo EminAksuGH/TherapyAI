@@ -6,6 +6,8 @@
     padding: 20px 40px;
     border-bottom: 1px solid #ddd;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+    z-index: 999;
 }
 
 .logo {
@@ -15,14 +17,58 @@
     font-family: 'Segoe UI', sans-serif;
 }
 
-.nav a {
-    margin-left: 24px;
-    text-decoration: none;
-    color: #444;
-    font-weight: 500;
-    transition: color 0.2s ease;
+.nav {
+    display: flex;
 }
 
-    .nav a:hover {
-        color: #6a4c93;
+    .nav a {
+        margin-left: 24px;
+        text-decoration: none;
+        color: #444;
+        font-weight: 500;
+        transition: color 0.2s ease;
     }
+
+        .nav a:hover {
+            color: #6a4c93;
+        }
+
+.hamburger {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+    gap: 5px;
+
+}
+
+    .hamburger span {
+        width: 24px;
+        height: 3px;
+        background-color: #6a4c93;
+        border-radius: 2px;
+    }
+
+@media (max-width: 768px) {
+    .hamburger {
+        display: flex;
+    }
+
+    .nav {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background-color: #f4f2f8;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        display: none;
+    }
+
+        .nav.open {
+            display: flex;
+        }
+
+        .nav a {
+            margin: 10px 0;
+        }
+}
