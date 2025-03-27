@@ -144,6 +144,42 @@
             background-color: #aaa;
         }
 
+@media (max-width: 768px) {
+    .chatContainer {
+        padding: 16px;
+        border-radius: 0;
+        box-shadow: none;
+        max-height: 80vh;
+    }
+
+    .chatLog {
+        max-height: 60vh;
+        padding-right: 6px;
+    }
+
+    .userMessage p,
+    .aiMessage p {
+        max-width: 90%;
+        font-size: 0.95rem;
+    }
+
+    .chatForm {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .chatInput {
+        font-size: 0.95rem;
+        padding: 10px;
+    }
+
+    .sendButton {
+        padding: 10px;
+        font-size: 0.95rem;
+        width: 100%;
+    }
+}
+
 
 
 
