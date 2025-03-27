@@ -45,6 +45,7 @@
     .supportWrapper {
         padding: 20px;
         align-items: flex-start;
+         
     }
 
     .supportContent {
@@ -52,6 +53,7 @@
         max-width: 100%;
         padding: 0 16px;
         text-align: left;
+        place-items: center;
     }
 
         .supportContent h1 {
