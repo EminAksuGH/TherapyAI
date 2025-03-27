@@ -46,6 +46,7 @@
         padding: 20px;
         align-items: center;
         place-items: center;
+        justify-content: center;
     }
 
     .supportContent {
@@ -54,6 +55,7 @@
         padding: 0 16px;
         text-align: left;
         place-items: center;
+        align-content: center;
     }
 
         .supportContent h1 {
