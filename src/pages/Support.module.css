@@ -44,7 +44,7 @@
 @media (max-width: 768px) {
     .supportWrapper {
         padding: 20px;
-        align-items: flex-start;
+        align-items: center;
         place-items: center;
     }
 
