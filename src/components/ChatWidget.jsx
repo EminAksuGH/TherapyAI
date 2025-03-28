@@ -323,15 +323,23 @@ These are the kinds of warm, human responses you should provide when the user op
 
     return (
         <div className={styles.chatContainer}>
-            <div className={styles.chatLog}>
-                {chatLog.map((msg, index) => (
-                    <div key={index} className={msg.sender === "ai" ? styles.aiMessage : styles.userMessage}>
-                        <p>{msg.text}</p>
-                    </div>
-                ))}
-                {loading && <p className={styles.loadingMessage}>Yazıyor...</p>}
-                <div ref={messagesEndRef} />
-            </div>
+{chatLog.length > 0 && (
+    <div className={styles.chatLog}>
+        {chatLog.map((msg, index) => {
+    const isLast = index === chatLog.length - 1;
+    return (
+        <div
+            key={index}
+            className={`${msg.sender === "ai" ? styles.aiMessage : styles.userMessage} ${isLast ? styles.lastMessage : ''}`}
+        >
+            <p>{msg.text}</p>
+        </div>
+    );
+})}
+        {loading && <p className={styles.loadingMessage}>Yazıyor...</p>}
+        <div ref={messagesEndRef} />
+    </div>
+)}
             <form onSubmit={handleSubmit} className={styles.chatForm}>
                 <input
                     type="text"

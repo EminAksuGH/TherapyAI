@@ -1,16 +1,42 @@
 .appContainer {
     display: flex;
     flex-direction: column;
+    height: 100vh;
     min-height: 100vh;
     max-height: 100vh;
     padding: 0;
     margin: 0;
+    overflow: hidden;
 }
 
 .mainContent {
     flex: 1;
-    background-color: #f4f9f8;
+    background-color: var(--bg-color);
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+    width: 100%;
+    overflow: hidden;
+    padding: 0 1rem;
+    margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mainContent {
+        padding: 0 0.5rem;
+    }
+}
+
+@media (min-width: 769px) {
+    .mainContent {
+        padding: 0 2rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .mainContent {
+        padding: 0 3rem;
+    }
 }
