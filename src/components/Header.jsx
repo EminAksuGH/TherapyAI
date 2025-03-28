@@ -49,9 +49,18 @@ const Header = () => {
                 ref={navRef}
                 className={`${styles.nav} ${menuOpen ? styles.open : ''}`}
             >
-                <Link to="/" onClick={() => setMenuOpen(false)}>Ana Sayfa</Link>
-                <Link to="/about" onClick={() => setMenuOpen(false)}>Hakkında</Link>
-                <Link to="/support" onClick={() => setMenuOpen(false)}>Destek</Link>
+                <Link to="/" 
+                    onClick={() => setMenuOpen(false)} 
+                    style={{"--item-index": 0}}
+                >Ana Sayfa</Link>
+                <Link to="/about" 
+                    onClick={() => setMenuOpen(false)} 
+                    style={{"--item-index": 1}}
+                >Hakkında</Link>
+                <Link to="/support" 
+                    onClick={() => setMenuOpen(false)} 
+                    style={{"--item-index": 2}}
+                >Destek</Link>
             </nav>
 
             <div className={styles.actions}>
@@ -60,7 +69,7 @@ const Header = () => {
                 </button>
                 <div
                     ref={hamburgerRef}
-                    className={styles.hamburger}
+                    className={`${styles.hamburger} ${menuOpen ? styles.open : ''}`}
                     onClick={() => setMenuOpen(!menuOpen)}
                 >
                     <span></span>

@@ -9,6 +9,18 @@
     position: relative;
     z-index: 999;
     width: 100%;
+    animation: fadeInDown 0.5s ease-out forwards;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .logo {
@@ -16,6 +28,11 @@
     font-weight: 600;
     color: var(--primary-link);
     font-family: 'Segoe UI', sans-serif;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover {
+    transform: scale(1.05);
 }
 
 .nav {
@@ -41,6 +58,7 @@
     gap: 5px;
     transition: all 0.3s ease;
     z-index: 1000;
+    padding: 8px;
 }
 
     .hamburger span {
@@ -49,26 +67,73 @@
         background-color: var(--text-color);
         border-radius: 2px;
         transition: all 0.3s ease;
+        transform-origin: center;
     }
 
-    .actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
+    /* Enhanced hover effects for hamburger */
+    .hamburger:hover span:nth-child(1) {
+        transform: translateX(-4px);
+        background-color: var(--primary-link-hover);
     }
     
-    .themeToggle {
-        background: none;
-        border: none;
-        color: var(--text-color);
-        font-size: 1.2rem;
-        cursor: pointer;
-        transition: transform 0.2s;
+    .hamburger:hover span:nth-child(2) {
+        transform: translateX(2px);
+        background-color: var(--primary-link-hover);
     }
     
-    .themeToggle:hover {
-        transform: scale(1.1);
+    .hamburger:hover span:nth-child(3) {
+        transform: translateX(-2px);
+        background-color: var(--primary-link-hover);
     }
+
+    /* Hamburger animation to X */
+    .hamburger.open span:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+        background-color: var(--primary-link-hover);
+    }
+    
+    .hamburger.open span:nth-child(2) {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    
+    .hamburger.open span:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+        background-color: var(--primary-link-hover);
+    }
+
+    /* Prevent hover animation when open */
+    .hamburger.open:hover span:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+    }
+    
+    .hamburger.open:hover span:nth-child(2) {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    
+    .hamburger.open:hover span:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+    }
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+    
+.themeToggle {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+    
+.themeToggle:hover {
+    transform: scale(1.1);
+}
 
 @media (max-width: 768px) {
     .header {
@@ -87,18 +152,21 @@
         flex-direction: column;
         align-items: center;
         width: 100%;
-        display: none;
+        display: flex;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        padding: 15px 0;
+        padding: 0;
         max-height: 0;
         overflow: hidden;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        opacity: 0;
+        transform: translateY(-10px);
     }
 
         .nav.open {
-            display: flex;
             max-height: 300px;
             padding: 15px 0;
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .nav a {
@@ -106,6 +174,36 @@
             padding: 8px 0;
             width: 100%;
             text-align: center;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: opacity 0.3s ease, transform 0.3s ease, color 0.2s ease, background-color 0.3s ease;
+            transition-delay: calc(0.05s * var(--item-index, 0));
+            position: relative;
+        }
+
+        .nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background-color: var(--primary-link-hover);
+            transition: width 0.3s ease, left 0.3s ease;
+        }
+
+        .nav a:hover::after {
+            width: 50%;
+            left: 25%;
+        }
+
+        .nav.open a {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .nav.open a:hover {
+            background-color: rgba(0, 0, 0, 0.05);
         }
 }
 
