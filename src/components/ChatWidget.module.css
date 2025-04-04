@@ -21,7 +21,7 @@
     scrollbar-gutter: stable both-edges;
     flex-grow: 1;
     scrollbar-width: thin;
-    scrollbar-color: var(--button-bg) transparent;
+    scrollbar-color: var(--scrollbar-color) transparent;
 }
 
 .chatLog.filled {
@@ -147,7 +147,7 @@
 
 .chatLog {
     scrollbar-width: thin;
-    scrollbar-color: var(--button-bg) transparent;
+    scrollbar-color: var(--scrollbar-color) transparent;
 }
 
     .chatLog::-webkit-scrollbar {
@@ -159,12 +159,12 @@
     }
 
     .chatLog::-webkit-scrollbar-thumb {
-        background-color: var(--button-bg);
+        background-color: var(--scrollbar-color);
         border-radius: 10px;
     }
 
         .chatLog::-webkit-scrollbar-thumb:hover {
-            background-color: var(--button-hover-bg);
+            background-color: var(--scrollbar-hover-color);
         }
 
 @media (max-width: 768px) {

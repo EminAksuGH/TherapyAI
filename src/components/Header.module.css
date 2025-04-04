@@ -3,7 +3,7 @@
     justify-content: space-between;
     align-items: center;
     background-color: var(--card-bg);
-    padding: 20px 40px;
+    padding: 16px 40px;
     border-bottom: 1px solid var(--button-bg);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
     position: relative;
@@ -29,6 +29,10 @@
     color: var(--primary-link);
     font-family: 'Segoe UI', sans-serif;
     transition: transform 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .logo:hover {
@@ -137,7 +141,7 @@
 
 @media (max-width: 768px) {
     .header {
-        padding: 15px 20px;
+        padding: 12px 20px;
     }
     
     .hamburger {
@@ -209,7 +213,7 @@
 
 @media (max-width: 480px) {
     .header {
-        padding: 12px 16px;
+        padding: 10px 16px;
     }
     
     .logo {
