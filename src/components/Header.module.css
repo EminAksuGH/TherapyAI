@@ -63,6 +63,7 @@
     transition: all 0.3s ease;
     z-index: 1000;
     padding: 8px;
+    justify-content: center;
 }
 
     .hamburger span {
@@ -133,6 +134,9 @@
     font-size: 1.2rem;
     cursor: pointer;
     transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
     
 .themeToggle:hover {
@@ -142,6 +146,7 @@
 @media (max-width: 768px) {
     .header {
         padding: 12px 20px;
+        min-height: 60px;
     }
     
     .hamburger {
@@ -183,6 +188,9 @@
             transition: opacity 0.3s ease, transform 0.3s ease, color 0.2s ease, background-color 0.3s ease;
             transition-delay: calc(0.05s * var(--item-index, 0));
             position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .nav a::after {
@@ -214,6 +222,7 @@
 @media (max-width: 480px) {
     .header {
         padding: 10px 16px;
+        min-height: 55px;
     }
     
     .logo {
@@ -223,5 +232,13 @@
     .hamburger span {
         width: 22px;
         height: 2px;
+    }
+
+    .actions {
+        gap: 8px;
+    }
+    
+    .hamburger {
+        padding: 6px;
     }
 }
