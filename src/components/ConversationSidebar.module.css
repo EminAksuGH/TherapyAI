@@ -3,8 +3,31 @@
     background-color: var(--sidebar-bg, #f7f0fe);
     border-right: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
     height: 100%;
+    max-height: 90vh;
     padding: 16px;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-color) transparent;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-color);
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-hover-color);
 }
 
 .sidebarHeader {
@@ -14,6 +37,10 @@
     margin-bottom: 20px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    position: sticky;
+    top: 0;
+    background-color: var(--sidebar-bg, #f7f0fe);
+    z-index: 2;
 }
 
 .sidebarHeader h3 {
@@ -43,6 +70,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    overflow-y: auto;
+    flex: 1;
 }
 
 .conversationItem {
@@ -107,11 +136,23 @@
     color: var(--delete-button-hover, #e74c3c);
 }
 
-.loading, .noConversations {
+.loading, .noConversations, .loadingMore {
     color: var(--text-secondary, rgba(0, 0, 0, 0.6));
     text-align: center;
     padding: 20px 0;
     font-size: 0.95rem;
+}
+
+.loadingMore {
+    padding: 10px 0;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.startNewHint {
+    font-size: 0.85rem;
+    margin-top: 8px;
+    color: var(--text-secondary, rgba(0, 0, 0, 0.5));
 }
 
 @media (max-width: 768px) {

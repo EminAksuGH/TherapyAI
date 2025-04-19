@@ -1,15 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase/firebase';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, orderBy, getDocs, doc, deleteDoc, writeBatch, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, deleteDoc, writeBatch, onSnapshot, limit, startAfter } from 'firebase/firestore';
 import styles from './ConversationSidebar.module.css';
 
 const ConversationSidebar = ({ onSelectConversation, currentConversationId }) => {
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [lastVisible, setLastVisible] = useState(null);
+    const [hasMore, setHasMore] = useState(true);
     const { currentUser } = useAuth();
+    const sidebarRef = useRef(null);
+    const CONVERSATIONS_PER_PAGE = 15;
 
-    // Listen for real-time updates to conversations
+    // Function to handle scroll events for infinite scrolling
+    const handleScroll = () => {
+        if (!sidebarRef.current || loadingMore || !hasMore) return;
+        
+        const { scrollTop, scrollHeight, clientHeight } = sidebarRef.current;
+        // If scrolled to bottom (with a small threshold)
+        if (scrollHeight - scrollTop - clientHeight < 50) {
+            loadMoreConversations();
+        }
+    };
+
+    // Initial load of conversations
     useEffect(() => {
         if (!currentUser) {
             setConversations([]);
@@ -22,20 +38,30 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId }) =>
         const q = query(
             collection(db, 'conversations'),
             where('userId', '==', currentUser.uid),
-            orderBy('updatedAt', 'desc')
+            orderBy('updatedAt', 'desc'),
+            limit(CONVERSATIONS_PER_PAGE)
         );
 
         // Use onSnapshot for real-time updates
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const conversationsList = querySnapshot.docs
-                .map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    updatedAt: doc.data().updatedAt?.toDate() || new Date()
-                }))
-                .filter(conv => conv.messageCount > 0);
+            if (!querySnapshot.empty) {
+                const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+                setLastVisible(lastDoc);
+                
+                const conversationsList = querySnapshot.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        updatedAt: doc.data().updatedAt?.toDate() || new Date()
+                    }))
+                    .filter(conv => conv.messageCount > 0);
 
-            setConversations(conversationsList);
+                setConversations(conversationsList);
+                setHasMore(querySnapshot.docs.length === CONVERSATIONS_PER_PAGE);
+            } else {
+                setConversations([]);
+                setHasMore(false);
+            }
             setLoading(false);
         }, (error) => {
             console.error('Error fetching conversations:', error);
@@ -45,6 +71,57 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId }) =>
         // Cleanup subscription on unmount
         return () => unsubscribe();
     }, [currentUser]);
+
+    // Set up scroll event listener
+    useEffect(() => {
+        const sidebar = sidebarRef.current;
+        if (sidebar) {
+            sidebar.addEventListener('scroll', handleScroll);
+            return () => sidebar.removeEventListener('scroll', handleScroll);
+        }
+    }, [hasMore, loadingMore]);
+
+    // Function to load more conversations
+    const loadMoreConversations = async () => {
+        if (!currentUser || !lastVisible || loadingMore || !hasMore) return;
+        
+        setLoadingMore(true);
+        
+        try {
+            const q = query(
+                collection(db, 'conversations'),
+                where('userId', '==', currentUser.uid),
+                orderBy('updatedAt', 'desc'),
+                startAfter(lastVisible),
+                limit(CONVERSATIONS_PER_PAGE)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+                // Set the last visible document for next pagination
+                const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+                setLastVisible(lastDoc);
+                
+                const newConversations = querySnapshot.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        updatedAt: doc.data().updatedAt?.toDate() || new Date()
+                    }))
+                    .filter(conv => conv.messageCount > 0);
+                
+                setConversations(prev => [...prev, ...newConversations]);
+                setHasMore(querySnapshot.docs.length === CONVERSATIONS_PER_PAGE);
+            } else {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error('Error loading more conversations:', error);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
 
     const handleDeleteConversation = async (e, conversationId) => {
         e.stopPropagation();
@@ -122,7 +199,7 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId }) =>
     }
 
     return (
-        <div className={styles.sidebar}>
+        <div className={styles.sidebar} ref={sidebarRef}>
             <div className={styles.sidebarHeader}>
                 <h3>Konuşmalarım</h3>
             </div>
@@ -131,7 +208,8 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId }) =>
                 <div className={styles.loading}>Yükleniyor...</div>
             ) : conversations.length === 0 ? (
                 <div className={styles.noConversations}>
-                    Henüz konuşma bulunmuyor.
+                    <p>Henüz konuşma bulunmuyor.</p>
+                    <p className={styles.startNewHint}>Yeni bir konuşma başlatmak için mesaj gönderin.</p>
                 </div>
             ) : (
                 <div className={styles.conversationList}>
@@ -148,11 +226,16 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId }) =>
                             <button 
                                 className={styles.deleteButton}
                                 onClick={(e) => handleDeleteConversation(e, conversation.id)}
+                                aria-label="Konuşmayı Sil"
                             >
                                 ×
                             </button>
                         </div>
                     ))}
+                    
+                    {loadingMore && (
+                        <div className={styles.loadingMore}>Daha fazla yükleniyor...</div>
+                    )}
                 </div>
             )}
         </div>

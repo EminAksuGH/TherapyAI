@@ -29,6 +29,7 @@ const ChatWidget = () => {
     const [currentConversationId, setCurrentConversationId] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const messagesEndRef = useRef(null);
+    const chatLogRef = useRef(null);
     const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
     const { currentUser } = useAuth();
 
@@ -53,7 +54,12 @@ const ChatWidget = () => {
     };
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messagesEndRef.current) {
+            // Use a slight delay to ensure DOM has updated
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+            }, 100);
+        }
     };
 
     // Create a new conversation ID
@@ -124,6 +130,9 @@ const ChatWidget = () => {
             });
             
             setChatLog(messages);
+            
+            // Ensure we scroll to bottom after loading messages
+            setTimeout(scrollToBottom, 200);
         } catch (error) {
             console.error("Error loading conversation messages:", error);
         }
@@ -183,17 +192,20 @@ const ChatWidget = () => {
         loadCurrentConversationMessages();
     }, [currentConversationId, currentUser]);
     
+    // Adjust the existing useEffect for scrolling to be more reliable
     useEffect(() => {
-        scrollToBottom();
+        if (chatLog.length > 0) {
+            scrollToBottom();
+        }
     }, [chatLog]);
 
     // Save message to Firestore if user is authenticated
-    const saveMessageToFirestore = async (message) => {
-        if (!currentUser) return;
+    const saveMessageToFirestore = async (message, providedConversationId = null) => {
+        if (!currentUser) return null;
         
         try {
             // Ensure we have a conversation ID
-            let conversationIdToUse = currentConversationId;
+            let conversationIdToUse = providedConversationId || currentConversationId;
             
             // Only create a new conversation if:
             // 1. We don't have a conversation ID AND
@@ -210,7 +222,7 @@ const ChatWidget = () => {
                 // This is an AI message but we don't have a conversation yet
                 // This shouldn't happen in normal flow, but we'll handle it
                 console.error("Attempted to save AI message without a conversation ID");
-                return;
+                return null;
             }
             
             // Add message to conversation's messages subcollection
@@ -247,9 +259,12 @@ const ChatWidget = () => {
                 }
             }
             
+            return conversationIdToUse;
+            
         } catch (error) {
             console.error("Error saving message to Firestore:", error);
             // Don't throw the error further, just log it to not break the chat experience
+            return null;
         }
     };
 
@@ -262,8 +277,20 @@ const ChatWidget = () => {
         const newUserMessage = { sender: "user", text: message };
         setChatLog((prevLog) => [...prevLog, newUserMessage]);
         
-        // Save user message to Firestore
-        await saveMessageToFirestore(newUserMessage);
+        // Save user message to Firestore and store the returned conversation ID
+        let activeConversationId = currentConversationId;
+        if (!activeConversationId) {
+            // If there's no conversation yet, the saveMessageToFirestore function will create one
+            // and we need to capture that new ID
+            const newConversationId = await saveMessageToFirestore(newUserMessage);
+            if (newConversationId) {
+                activeConversationId = newConversationId;
+                setCurrentConversationId(newConversationId);
+            }
+        } else {
+            // If we already have a conversation, just save the message
+            await saveMessageToFirestore(newUserMessage, activeConversationId);
+        }
         
         setMessage("");
         setLoading(true);
@@ -550,10 +577,9 @@ These are the kinds of warm, human responses you should provide when the user op
             const newAiMessage = { sender: "ai", text: aiResponse };
             setChatLog((prevLog) => [...prevLog, newAiMessage]);
             
-            // Save AI response to Firestore
-            // Only proceed if we have a conversation ID (created by the user message)
-            if (currentConversationId) {
-                await saveMessageToFirestore(newAiMessage);
+            // Save AI response to Firestore using the active conversation ID
+            if (activeConversationId) {
+                await saveMessageToFirestore(newAiMessage, activeConversationId);
             } else {
                 console.log("Skipping saving AI message - no conversation ID yet");
             }
@@ -564,12 +590,15 @@ These are the kinds of warm, human responses you should provide when the user op
             setChatLog((prevLog) => [...prevLog, errorMessage]);
             
             // Only save error message if we have a valid conversation
-            if (currentConversationId) {
-                await saveMessageToFirestore(errorMessage);
+            if (activeConversationId) {
+                await saveMessageToFirestore(errorMessage, activeConversationId);
             }
         }
 
         setLoading(false);
+        
+        // Make sure we scroll to the bottom after submitting a message
+        setTimeout(scrollToBottom, 200);
     };
 
     // Start a new conversation by clearing the chat log and creating a new conversation in Firebase
@@ -586,6 +615,45 @@ These are the kinds of warm, human responses you should provide when the user op
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
     };
+
+    // Function to ensure chat log has appropriate height
+    const adjustChatLogHeight = () => {
+        if (chatLogRef.current) {
+            const chatContainer = chatLogRef.current.parentElement;
+            if (chatContainer) {
+                const containerHeight = chatContainer.clientHeight;
+                const headerHeight = document.querySelector(`.${styles.chatHeader}`)?.clientHeight || 60;
+                const formHeight = document.querySelector(`.${styles.chatForm}`)?.clientHeight || 60;
+                const padding = 40; // Increased padding to ensure no overflow
+                
+                const availableHeight = containerHeight - headerHeight - formHeight - padding;
+                chatLogRef.current.style.height = `${Math.max(200, availableHeight)}px`;
+                chatLogRef.current.style.maxHeight = `${Math.max(200, availableHeight)}px`;
+                
+                // Ensure scrolling works by setting overflow explicitly
+                chatLogRef.current.style.overflowY = 'auto';
+                chatLogRef.current.style.display = 'flex';
+                chatLogRef.current.style.flexDirection = 'column';
+            }
+        }
+    };
+    
+    // Adjust chat log height on window resize
+    useEffect(() => {
+        adjustChatLogHeight();
+        
+        const handleResize = () => {
+            adjustChatLogHeight();
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    
+    // Adjust chat log height when chat log content changes
+    useEffect(() => {
+        adjustChatLogHeight();
+    }, [chatLog]);
 
     return (
         <div className={styles.chatPageContainer}>
@@ -618,7 +686,7 @@ These are the kinds of warm, human responses you should provide when the user op
                     </div>
                     
                     {chatLog.length > 0 ? (
-                        <div className={styles.chatLog}>
+                        <div className={`${styles.chatLog} ${chatLog.length > 0 ? styles.filled : ''}`} ref={chatLogRef}>
                             {chatLog.map((msg, index) => {
                                 const isLast = index === chatLog.length - 1;
                                 return (

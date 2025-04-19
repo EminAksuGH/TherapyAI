@@ -110,7 +110,7 @@ const Header = () => {
 
     return (
         <header className={styles.header}>
-            <div className={styles.logo}>TherapyAI</div>
+            <div className={styles.logo} onClick={() => navigate('/')} style={{cursor: 'pointer'}}>TherapyAI</div>
 
             <nav 
                 ref={navRef}
