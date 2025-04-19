@@ -5,10 +5,7 @@ import {
   signOut, 
   onAuthStateChanged,
   sendPasswordResetEmail,
-  updateProfile,
-  sendEmailVerification,
-  applyActionCode,
-  checkActionCode
+  updateProfile
 } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
 
@@ -46,22 +43,6 @@ export function AuthProvider({ children }) {
     return updateProfile(auth.currentUser, profileData);
   }
 
-  function sendVerificationEmail() {
-    const actionCodeSettings = {
-      url: 'https://therapyai-3b847.firebaseapp.com/verify-email',
-      handleCodeInApp: true
-    };
-    return sendEmailVerification(auth.currentUser, actionCodeSettings);
-  }
-
-  function verifyEmail(actionCode) {
-    return applyActionCode(auth, actionCode);
-  }
-
-  function checkVerificationCode(actionCode) {
-    return checkActionCode(auth, actionCode);
-  }
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -77,10 +58,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     resetPassword,
-    updateUserProfile,
-    sendVerificationEmail,
-    verifyEmail,
-    checkVerificationCode
+    updateUserProfile
   };
 
   return (

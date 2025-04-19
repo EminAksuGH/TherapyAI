@@ -16,7 +16,7 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup, sendVerificationEmail } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
 
   // Add effect to set auth-page class on body
@@ -70,19 +70,15 @@ const Signup = () => {
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         name: formData.name,
         email: formData.email,
-        emailVerified: false,
         createdAt: new Date()
       });
       
-      // Send verification email
-      await sendVerificationEmail();
+      setMessage('Hesabınız oluşturuldu! Giriş sayfasına yönlendiriliyorsunuz...');
       
-      setMessage('Hesabınız oluşturuldu. Lütfen e-posta adresinizi doğrulamak için gönderdiğimiz e-postadaki bağlantıya tıklayın.');
-      
-      // Navigate to home after 5 seconds
+      // Navigate to home after 3 seconds
       setTimeout(() => {
-        navigate('/');
-      }, 5000);
+        navigate('/login');
+      }, 3000);
     } catch (err) {
       // Create more concise error message
       if (err.code === 'auth/email-already-in-use') {
