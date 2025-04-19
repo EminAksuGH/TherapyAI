@@ -5,7 +5,8 @@ import {
   signOut, 
   onAuthStateChanged,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  sendEmailVerification
 } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
 
@@ -33,7 +34,7 @@ export function AuthProvider({ children }) {
 
   function resetPassword(email) {
     const actionCodeSettings = {
-      url: 'https://therapyai-3b847.firebaseapp.com/change-password',
+      url: 'https://therapyai-production-4230.up.railway.app/change-password',
       handleCodeInApp: true
     };
     return sendPasswordResetEmail(auth, email, actionCodeSettings);
@@ -41,6 +42,14 @@ export function AuthProvider({ children }) {
 
   function updateUserProfile(profileData) {
     return updateProfile(auth.currentUser, profileData);
+  }
+
+  function verifyEmail() {
+    const actionCodeSettings = {
+      url: 'https://therapyai-production-4230.up.railway.app/verify-email',
+      handleCodeInApp: true
+    };
+    return sendEmailVerification(auth.currentUser, actionCodeSettings);
   }
 
   useEffect(() => {
@@ -58,7 +67,8 @@ export function AuthProvider({ children }) {
     login,
     logout,
     resetPassword,
-    updateUserProfile
+    updateUserProfile,
+    verifyEmail
   };
 
   return (

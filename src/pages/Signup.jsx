@@ -16,7 +16,7 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signup } = useAuth();
+  const { signup, verifyEmail } = useAuth();
   const navigate = useNavigate();
 
   // Add effect to set auth-page class on body
@@ -66,20 +66,38 @@ const Signup = () => {
         displayName: formData.name
       });
       
-      // Create user document in Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        name: formData.name,
-        email: formData.email,
-        createdAt: new Date()
-      });
+      // Send email verification
+      try {
+        await verifyEmail();
+        console.log("Email verification sent successfully");
+      } catch (verifyError) {
+        console.error("Email verification error:", verifyError);
+        // Continue anyway, just log the error
+      }
       
-      setMessage('Hesabınız oluşturuldu! Giriş sayfasına yönlendiriliyorsunuz...');
+      // Create user document in Firestore in a separate try/catch
+      try {
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          name: formData.name,
+          email: formData.email,
+          emailVerified: false,
+          createdAt: new Date()
+        });
+        console.log("User document created in Firestore");
+      } catch (firestoreErr) {
+        console.error("Firestore error:", firestoreErr);
+        // Continue even if Firestore fails
+      }
       
-      // Navigate to home after 3 seconds
+      setMessage('Hesabınız oluşturuldu! Lütfen e-posta adresinizi doğrulamak için gönderdiğimiz bağlantıya tıklayın.');
+      
+      // Navigate to login after 5 seconds
       setTimeout(() => {
         navigate('/login');
-      }, 3000);
+      }, 5000);
     } catch (err) {
+      console.error("Authentication error:", err);
+      
       // Create more concise error message
       if (err.code === 'auth/email-already-in-use') {
         setError('Bu e-posta adresi zaten kullanımda');
@@ -87,8 +105,10 @@ const Signup = () => {
         setError('Lütfen e-posta adresine bir \'@\' ekleyin');
       } else if (err.code === 'auth/weak-password') {
         setError('Parola çok zayıf');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Ağ hatası. İnternet bağlantınızı kontrol edin.');
       } else {
-        setError('Hesap oluşturma başarısız oldu');
+        setError(`Hesap oluşturma başarısız oldu: ${err.code || err.message}`);
       }
     } finally {
       setLoading(false);

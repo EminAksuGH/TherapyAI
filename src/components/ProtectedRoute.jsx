@@ -10,7 +10,13 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
   
-  // If the user is authenticated, render the child routes
+  // Check if email is verified
+  if (!currentUser.emailVerified) {
+    // You can redirect to a special page or show a verification required message
+    return <Navigate to="/login?requireVerification=true" replace />;
+  }
+  
+  // If the user is authenticated and email is verified, render the child routes
   return <Outlet />;
 };
 
