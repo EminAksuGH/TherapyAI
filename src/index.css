@@ -13,6 +13,14 @@
     --button-hover-border: #646cff;
     --scrollbar-color: #bc6ed0;
     --scrollbar-hover-color: #9f54b8;
+    
+    /* Alert message styles */
+    --theme-error-bg: #fff3e0;
+    --theme-error-text: #333;
+    --theme-error-border: #ffe0b2;
+    --theme-success-bg: #e8f5e9;
+    --theme-success-text: #333;
+    --theme-success-border: #c8e6c9;
 }
 
 :root[data-theme='dark'] {
@@ -30,6 +38,14 @@
     --button-hover-border: #9999dd;
     --scrollbar-color: var(--button-bg);
     --scrollbar-hover-color: var(--button-hover-bg);
+    
+    /* Alert message styles */
+    --theme-error-bg: #3d2e1e;
+    --theme-error-text: #e0e0e0;
+    --theme-error-border: #6d4c2f;
+    --theme-success-bg: #1e3b29;
+    --theme-success-text: #e0e0e0;
+    --theme-success-border: #2e5a40;
 }
 
 /* Genel stiller */
@@ -52,12 +68,14 @@
 
 body {
     margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    min-width: 100vw;
-    min-height: 100vh;
+    width: 100vw;
+    height: 100vh;
     background-color: var(--bg-color);
     color: var(--text-color);
+    overflow-x: hidden; /* Prevent horizontal scrollbar */
 }
 
 a {
@@ -134,9 +152,9 @@ button:focus-visible {
 html, body {
     margin: 0;
     padding: 0;
-    overflow-y: auto;
+    overflow-x: hidden; /* Hide horizontal scrollbar */
+    overflow-y: auto; /* Show vertical scrollbar only when needed */
     height: 100%;
-    max-height: 100vh;
     width: 100%;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-color) transparent;
@@ -170,4 +188,9 @@ img, video, iframe {
 
 * {
     box-sizing: border-box;
+}
+
+/* Auth page specific styles */
+.auth-page {
+    overflow: hidden; /* Hide all scrollbars for auth pages */
 }

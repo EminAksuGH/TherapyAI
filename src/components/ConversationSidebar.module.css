@@ -1,0 +1,124 @@
+.sidebar {
+    width: 280px;
+    background-color: var(--sidebar-bg, #f7f0fe);
+    border-right: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    height: 100%;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.sidebarHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+}
+
+.sidebarHeader h3 {
+    margin: 0;
+    color: var(--title-color, var(--text-color));
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.newChatButton {
+    background-color: transparent;
+    color: var(--button-bg);
+    border: 1px solid var(--button-bg);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.newChatButton:hover {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+}
+
+.conversationList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.conversationItem {
+    padding: 12px 14px;
+    border-radius: 8px;
+    background-color: var(--card-bg);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.conversationItem:hover {
+    background-color: var(--hover-bg, #f0e6f8);
+}
+
+.conversationItem.active {
+    background-color: var(--active-bg, #e5d6f5);
+    border-left: 3px solid var(--button-bg);
+}
+
+.conversationInfo {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.title {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.date {
+    color: var(--text-secondary, rgba(0, 0, 0, 0.6));
+    font-size: 0.8rem;
+}
+
+.deleteButton {
+    font-size: 1.2rem;
+    background: transparent;
+    color: var(--delete-button, #999);
+    border: none;
+    cursor: pointer;
+    padding: 0 6px;
+    opacity: 0;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.conversationItem:hover .deleteButton {
+    opacity: 1;
+}
+
+.deleteButton:hover {
+    color: var(--delete-button-hover, #e74c3c);
+}
+
+.loading, .noConversations {
+    color: var(--text-secondary, rgba(0, 0, 0, 0.6));
+    text-align: center;
+    padding: 20px 0;
+    font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    }
+} 

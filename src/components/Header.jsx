@@ -1,14 +1,24 @@
 ﻿import { useContext, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 import { ThemeContext } from '../context/ThemeContext.jsx';
-import { FaSun, FaMoon } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaInfoCircle, FaHeadset } from 'react-icons/fa';
 
 const Header = () => {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
     const navRef = useRef(null);
     const hamburgerRef = useRef(null);
+    const dropdownRef = useRef(null);
     const { theme, toggleTheme } = useContext(ThemeContext);
+    const { currentUser, logout } = useAuth();
+    const navigate = useNavigate();
+
+    // Reset dropdown when currentUser changes
+    useEffect(() => {
+        setDropdownOpen(false);
+    }, [currentUser]);
 
     const handleClickOutside = (event) => {
         if (
@@ -20,6 +30,36 @@ const Header = () => {
         ) {
             setMenuOpen(false);
         }
+        
+        // Close dropdown when clicking outside
+        if (
+            dropdownRef.current &&
+            !dropdownRef.current.contains(event.target) &&
+            dropdownOpen
+        ) {
+            setDropdownOpen(false);
+        }
+    };
+
+    const handleLogout = async (e) => {
+        e.preventDefault();
+        setDropdownOpen(false);
+        try {
+            await logout();
+            navigate('/');
+        } catch (error) {
+            console.error('Failed to log out', error);
+        }
+    };
+
+    const handleEditProfile = () => {
+        setDropdownOpen(false);
+        navigate('/edit-profile');
+    };
+
+    const toggleDropdown = (e) => {
+        e.stopPropagation();
+        setDropdownOpen(!dropdownOpen);
     };
 
     useEffect(() => {
@@ -27,7 +67,7 @@ const Header = () => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [menuOpen]);
+    }, [menuOpen, dropdownOpen]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -52,21 +92,94 @@ const Header = () => {
                 <Link to="/" 
                     onClick={() => setMenuOpen(false)} 
                     style={{"--item-index": 0}}
-                >Ana Sayfa</Link>
+                >
+                    <FaHome className={styles.menuIcon} /> Ana Sayfa
+                </Link>
                 <Link to="/about" 
                     onClick={() => setMenuOpen(false)} 
                     style={{"--item-index": 1}}
-                >Hakkında</Link>
+                >
+                    <FaInfoCircle className={styles.menuIcon} /> Hakkında
+                </Link>
                 <Link to="/support" 
                     onClick={() => setMenuOpen(false)} 
                     style={{"--item-index": 2}}
-                >Destek</Link>
+                >
+                    <FaHeadset className={styles.menuIcon} /> Destek
+                </Link>
+                
+                {/* Giriş Yap/Profil link in hamburger menu */}
+                {currentUser ? (
+                    <>
+                        <Link to="/edit-profile" 
+                            onClick={() => setMenuOpen(false)} 
+                            style={{"--item-index": 3}}
+                            className={styles.mobileOnly}
+                        >
+                            <FaEdit className={styles.menuIcon} /> Profili Düzenle
+                        </Link>
+                        <Link to="/" 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setMenuOpen(false);
+                                handleLogout(e);
+                            }} 
+                            style={{"--item-index": 3}}
+                            className={`${styles.mobileOnly} ${styles.logoutLink}`}
+                        >
+                            <FaSignOutAlt className={styles.menuIcon} /> Çıkış Yap
+                        </Link>
+                    </>
+                ) : (
+                    <Link to="/login" 
+                        onClick={() => setMenuOpen(false)} 
+                        style={{"--item-index": 3}}
+                        className={styles.mobileOnly}
+                    >
+                        <FaUser className={styles.menuIcon} /> Giriş Yap
+                    </Link>
+                )}
             </nav>
 
             <div className={styles.actions}>
                 <button onClick={toggleTheme} className={styles.themeToggle}>
                     {theme === 'light' ? <FaMoon /> : <FaSun />}
                 </button>
+                
+                {currentUser ? (
+                    <div className={styles.profileContainer} ref={dropdownRef}>
+                        <div 
+                            className={`${styles.profileLink} ${dropdownOpen ? styles.active : ''}`} 
+                            onClick={toggleDropdown}
+                        >
+                            <FaUser />
+                        </div>
+                        {dropdownOpen && (
+                            <div className={styles.profileDropdown}>
+                                <div 
+                                    className={styles.dropdownItem}
+                                    onClick={handleEditProfile}
+                                >
+                                    <FaEdit /> Profili Düzenle
+                                </div>
+                                <div className={styles.dropdownDivider}></div>
+                                <div 
+                                    className={styles.dropdownItem}
+                                    onClick={handleLogout}
+                                >
+                                    <FaSignOutAlt /> Çıkış Yap
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className={styles.authLinks}>
+                        <Link to="/login" className={styles.loginLink}>
+                            Giriş yap
+                        </Link>
+                    </div>
+                )}
+
                 <div
                     ref={hamburgerRef}
                     className={`${styles.hamburger} ${menuOpen ? styles.open : ''}`}

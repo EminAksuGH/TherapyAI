@@ -2,10 +2,16 @@ import React from 'react';
 import styles from './Home.module.css';
 import { motion } from 'framer-motion';
 import { FaHeartbeat, FaBrain, FaUserFriends } from 'react-icons/fa';
+import EmailVerificationBanner from '../components/EmailVerificationBanner';
+import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
+    const { currentUser } = useAuth();
+    
     return (
         <section className={styles.homeContainer}>
+            {currentUser && <EmailVerificationBanner />}
+            
             <div className={styles.heroSection}>
                 <motion.h1 
                     className={styles.title}
