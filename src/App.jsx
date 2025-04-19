@@ -13,6 +13,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import ProtectedRoute from './components/ProtectedRoute';
+import FirebaseActionHandler from './pages/FirebaseActionHandler';
 import { AuthProvider } from './context/AuthContext';
 import styles from './App.module.css';
 
@@ -32,6 +33,7 @@ const App = () => {
                         <Route path="/verify-email" element={<VerifyEmail />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/logout" element={<Navigate to="/" replace />} />
+                        <Route path="/action-handler" element={<FirebaseActionHandler />} />
                         
                         {/* Protected routes - user must be logged in AND email verified */}
                         <Route element={<ProtectedRoute />}>

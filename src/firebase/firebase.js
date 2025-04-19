@@ -20,4 +20,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Set custom action handler URL for password reset and email verification
+auth.config.actionCodeUrl = 'https://therapyai-production-4230.up.railway.app/action-handler';
+
 export { auth, db }; 
