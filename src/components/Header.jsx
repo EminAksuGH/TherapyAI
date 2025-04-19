@@ -5,6 +5,11 @@ import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useAuth } from '../context/AuthContext';
 import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaInfoCircle, FaHeadset } from 'react-icons/fa';
 
+// Function to check if a path is protected
+const isProtectedPath = (path) => {
+  return ['/support', '/profile', '/edit-profile'].includes(path);
+};
+
 const Header = () => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -12,13 +17,35 @@ const Header = () => {
     const hamburgerRef = useRef(null);
     const dropdownRef = useRef(null);
     const { theme, toggleTheme } = useContext(ThemeContext);
-    const { currentUser, logout } = useAuth();
+    const { currentUser, logout, reloadUser } = useAuth();
     const navigate = useNavigate();
 
     // Reset dropdown when currentUser changes
     useEffect(() => {
         setDropdownOpen(false);
     }, [currentUser]);
+
+    // Handler for navigation to protected routes
+    const handleProtectedNavigation = async (e, path) => {
+      if (currentUser && isProtectedPath(path)) {
+        e.preventDefault();
+        
+        try {
+          // Reload auth state before navigation
+          await reloadUser();
+          
+          // After reload, check if email is verified
+          if (!currentUser.emailVerified) {
+            navigate('/login?requireVerification=true');
+          } else {
+            navigate(path);
+          }
+        } catch (error) {
+          console.error("Error refreshing auth state:", error);
+          navigate(path); // Navigate anyway
+        }
+      }
+    };
 
     const handleClickOutside = (event) => {
         if (
@@ -101,8 +128,9 @@ const Header = () => {
                 >
                     <FaInfoCircle className={styles.menuIcon} /> Hakkında
                 </Link>
-                <Link to="/support" 
-                    onClick={() => setMenuOpen(false)} 
+                <Link 
+                    to="/support" 
+                    onClick={(e) => handleProtectedNavigation(e, '/support')}
                     style={{"--item-index": 2}}
                 >
                     <FaHeadset className={styles.menuIcon} /> Destek
@@ -112,7 +140,10 @@ const Header = () => {
                 {currentUser ? (
                     <>
                         <Link to="/edit-profile" 
-                            onClick={() => setMenuOpen(false)} 
+                            onClick={(e) => {
+                                setMenuOpen(false);
+                                handleProtectedNavigation(e, '/edit-profile');
+                            }} 
                             style={{"--item-index": 3}}
                             className={styles.mobileOnly}
                         >
@@ -158,7 +189,10 @@ const Header = () => {
                             <div className={styles.profileDropdown}>
                                 <div 
                                     className={styles.dropdownItem}
-                                    onClick={handleEditProfile}
+                                    onClick={(e) => {
+                                        handleEditProfile();
+                                        handleProtectedNavigation(e, '/edit-profile');
+                                    }}
                                 >
                                     <FaEdit /> Profili Düzenle
                                 </div>

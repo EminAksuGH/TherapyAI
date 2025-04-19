@@ -16,7 +16,7 @@ const Login = () => {
     needsVerification: false,
     email: ''
   });
-  const { login, verifyEmail, currentUser, logout } = useAuth();
+  const { login, verifyEmail, currentUser, logout, reloadUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -30,6 +30,19 @@ const Login = () => {
     
     if (emailVerified === 'true') {
       setMessage('E-posta adresiniz doğrulandı! Şimdi giriş yapabilirsiniz.');
+      
+      // If the user is already logged in, reload auth state to update emailVerified status
+      if (currentUser) {
+        const reloadAuthState = async () => {
+          try {
+            await reloadUser();
+            console.log("Auth state reloaded after email verification");
+          } catch (error) {
+            console.error("Error reloading auth state:", error);
+          }
+        };
+        reloadAuthState();
+      }
     }
     
     // Handle redirect from protected routes

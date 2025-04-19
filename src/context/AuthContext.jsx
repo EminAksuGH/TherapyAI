@@ -6,7 +6,8 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   updateProfile,
-  sendEmailVerification
+  sendEmailVerification,
+  reload
 } from 'firebase/auth';
 import { auth } from '../firebase/firebase';
 
@@ -51,6 +52,13 @@ export function AuthProvider({ children }) {
     };
     return sendEmailVerification(auth.currentUser, actionCodeSettings);
   }
+  
+  function reloadUser() {
+    if (auth.currentUser) {
+      return reload(auth.currentUser);
+    }
+    return Promise.resolve();
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -68,7 +76,8 @@ export function AuthProvider({ children }) {
     logout,
     resetPassword,
     updateUserProfile,
-    verifyEmail
+    verifyEmail,
+    reloadUser
   };
 
   return (

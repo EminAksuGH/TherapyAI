@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { applyActionCode, getAuth } from 'firebase/auth';
+import { applyActionCode, getAuth, reload } from 'firebase/auth';
 import styles from './Auth.module.css';
 
 const VerifyEmail = () => {
@@ -34,6 +34,12 @@ const VerifyEmail = () => {
     const verifyEmail = async () => {
       try {
         await applyActionCode(auth, actionCode);
+        
+        // Reload the auth state to update emailVerified status
+        if (auth.currentUser) {
+          await reload(auth.currentUser);
+        }
+        
         setVerificationState({
           isVerifying: false,
           isSuccess: true,
