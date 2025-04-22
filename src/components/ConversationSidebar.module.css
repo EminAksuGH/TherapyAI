@@ -50,6 +50,22 @@
     font-size: 1.1rem;
 }
 
+.closeButton {
+    font-size: 1.5rem;
+    background: transparent;
+    color: var(--text-secondary, rgba(0, 0, 0, 0.6));
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s ease;
+    display: none;
+}
+
+.closeButton:hover {
+    color: var(--text-color);
+}
+
 .newChatButton {
     background-color: transparent;
     color: var(--button-bg);
@@ -161,5 +177,8 @@
         height: auto;
         border-right: none;
         border-bottom: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    }
+    .closeButton {
+        display: block;
     }
 } 

@@ -661,6 +661,7 @@ These are the kinds of warm, human responses you should provide when the user op
                 <ConversationSidebar 
                     onSelectConversation={handleSelectConversation}
                     currentConversationId={currentConversationId}
+                    onClose={toggleSidebar}
                 />
             </div>
             

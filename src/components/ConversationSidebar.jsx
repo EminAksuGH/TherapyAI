@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { collection, query, where, orderBy, getDocs, doc, deleteDoc, writeBatch, onSnapshot, limit, startAfter } from 'firebase/firestore';
 import styles from './ConversationSidebar.module.css';
 
-const ConversationSidebar = ({ onSelectConversation, currentConversationId }) => {
+const ConversationSidebar = ({ onSelectConversation, currentConversationId, onClose }) => {
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -202,6 +202,13 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId }) =>
         <div className={styles.sidebar} ref={sidebarRef}>
             <div className={styles.sidebarHeader}>
                 <h3>Konuşmalarım</h3>
+                <button 
+                    className={styles.closeButton} 
+                    onClick={onClose}
+                    aria-label="Kapat"
+                >
+                    ×
+                </button>
             </div>
             
             {loading ? (
