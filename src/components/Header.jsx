@@ -130,7 +130,10 @@ const Header = () => {
                 </Link>
                 <Link 
                     to="/support" 
-                    onClick={(e) => handleProtectedNavigation(e, '/support')}
+                    onClick={(e) => {
+                        setMenuOpen(false);
+                        handleProtectedNavigation(e, '/support');
+                    }}
                     style={{"--item-index": 2}}
                 >
                     <FaHeadset className={styles.menuIcon} /> Destek
