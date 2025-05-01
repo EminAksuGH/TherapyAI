@@ -81,7 +81,11 @@ const Signup = () => {
           name: formData.name,
           email: formData.email,
           emailVerified: false,
-          createdAt: new Date()
+          createdAt: new Date(),
+          lastActive: new Date(),
+          preferences: {
+            memoryEnabled: true
+          }
         });
         console.log("User document created in Firestore");
       } catch (firestoreErr) {
