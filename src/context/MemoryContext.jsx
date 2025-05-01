@@ -22,26 +22,13 @@ export function MemoryProvider({ children }) {
   const MAX_TOPICS = 20;
 
   useEffect(() => {
-    if (!currentUser) {
-      setLoading(false);
-      return;
-    }
-
     async function initializeMemory() {
-      setLoading(true);
+      if (!currentUser) {
+        setLoading(false);
+        return;
+      }
 
       try {
-        // Check if email is verified before proceeding with any Firestore operations
-        if (!currentUser.emailVerified) {
-          console.log("Email not verified, skipping memory initialization");
-          setRecentMemories([]);
-          setImportantMemories([]);
-          setUserTopics([]);
-          setTopicCount(0);
-          setLoading(false);
-          return;
-        }
-
         // Ensure user profile exists
         await memoryService.ensureUserProfile(currentUser.uid);
         
@@ -95,11 +82,6 @@ export function MemoryProvider({ children }) {
   // Create a new memory
   const createMemory = async (topic, content, conversationId, importance = 5) => {
     if (!currentUser) return null;
-    // Skip if email not verified
-    if (!currentUser.emailVerified) {
-      console.log("Email not verified, cannot create memory");
-      return null;
-    }
     
     try {
       const memoryId = await memoryService.createMemory(
@@ -124,11 +106,6 @@ export function MemoryProvider({ children }) {
   // Delete a memory
   const deleteMemory = async (memoryId) => {
     if (!currentUser) return false;
-    // Skip if email not verified
-    if (!currentUser.emailVerified) {
-      console.log("Email not verified, cannot delete memory");
-      return false;
-    }
     
     try {
       // Delete the memory
@@ -167,11 +144,6 @@ export function MemoryProvider({ children }) {
   // AI-driven memory creation from conversation
   const createMemoryFromConversation = async (userMessage, conversationContext, conversationId) => {
     if (!currentUser || !memoryEnabled) return null;
-    // Skip if email not verified
-    if (!currentUser.emailVerified) {
-      console.log("Email not verified, cannot create memory from conversation");
-      return null;
-    }
     
     try {
       // Get existing memories to check for duplicates
@@ -276,11 +248,6 @@ export function MemoryProvider({ children }) {
   // Search for memories based on keywords
   const searchMemories = async (query) => {
     if (!currentUser) return [];
-    // Skip if email not verified
-    if (!currentUser.emailVerified) {
-      console.log("Email not verified, cannot search memories");
-      return [];
-    }
     
     try {
       return await memoryService.searchMemories(currentUser.uid, query);
@@ -293,11 +260,6 @@ export function MemoryProvider({ children }) {
   // Get memories by topic
   const getMemoriesByTopic = async (topic) => {
     if (!currentUser) return [];
-    // Skip if email not verified
-    if (!currentUser.emailVerified) {
-      console.log("Email not verified, cannot get memories by topic");
-      return [];
-    }
     
     try {
       return await memoryService.getMemoriesByTopic(currentUser.uid, topic);
@@ -309,12 +271,7 @@ export function MemoryProvider({ children }) {
 
   // Format memories for AI context
   const getFormattedMemories = async (searchQuery = null) => {
-    if (!currentUser) return "";
-    // Skip if email not verified
-    if (!currentUser.emailVerified) {
-      console.log("Email not verified, cannot get formatted memories");
-      return "";
-    }
+    if (!currentUser || !memoryEnabled) return "";
     
     try {
       let memories;
@@ -336,17 +293,12 @@ export function MemoryProvider({ children }) {
 
   // Toggle memory feature enabled/disabled
   const toggleMemoryEnabled = async () => {
-    if (!currentUser) return false;
-    // Skip if email not verified
-    if (!currentUser.emailVerified) {
-      console.log("Email not verified, cannot toggle memory enabled");
-      return false;
-    }
+    if (!currentUser) return;
+
+    const newMemoryEnabled = !memoryEnabled;
+    setMemoryEnabled(newMemoryEnabled);
     
     try {
-      const newMemoryEnabled = !memoryEnabled;
-      setMemoryEnabled(newMemoryEnabled);
-      
       // Update preference in Firebase
       const userRef = doc(db, "users", currentUser.uid);
       await updateDoc(userRef, {
@@ -378,12 +330,7 @@ export function MemoryProvider({ children }) {
 
   // Clean up low importance memories
   const cleanupLowImportanceMemories = async (importanceThreshold = 5) => {
-    if (!currentUser) return false;
-    // Skip if email not verified
-    if (!currentUser.emailVerified) {
-      console.log("Email not verified, cannot cleanup memories");
-      return false;
-    }
+    if (!currentUser) return 0;
     
     try {
       const deletedCount = await memoryService.deleteLowImportanceMemories(
@@ -406,7 +353,7 @@ export function MemoryProvider({ children }) {
       return deletedCount;
     } catch (error) {
       console.error("Error cleaning up memories:", error);
-      return false;
+      return 0;
     }
   };
 

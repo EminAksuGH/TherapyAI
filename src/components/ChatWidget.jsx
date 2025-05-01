@@ -20,7 +20,7 @@ import {
     increment,
     limit
 } from "firebase/firestore";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import ConversationSidebar from "./ConversationSidebar";
 
 const ChatWidget = () => {
@@ -29,13 +29,10 @@ const ChatWidget = () => {
     const [loading, setLoading] = useState(false);
     const [currentConversationId, setCurrentConversationId] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [authChecked, setAuthChecked] = useState(false);
-    const [authError, setAuthError] = useState(false);
     const messagesEndRef = useRef(null);
     const chatLogRef = useRef(null);
     const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-    const { currentUser, reloadUser } = useAuth();
-    const navigate = useNavigate();
+    const { currentUser } = useAuth();
     const { 
         memoryEnabled, 
         toggleMemoryEnabled, 
@@ -45,51 +42,8 @@ const ChatWidget = () => {
         MAX_TOPICS
     } = useMemory();
 
-    // Check authentication state
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                setAuthChecked(false);
-                
-                if (!currentUser) {
-                    setAuthError(true);
-                    return;
-                }
-                
-                // Force token refresh and reload auth state
-                if (currentUser) {
-                    try {
-                        // Force token refresh
-                        await currentUser.getIdToken(true);
-                        // Reload auth state
-                        await reloadUser();
-                        
-                        console.log("ChatWidget: Email verified status:", currentUser.emailVerified);
-                        
-                        if (!currentUser.emailVerified) {
-                            console.log("Email not verified, redirecting from chat");
-                            setAuthError(true);
-                            navigate('/login?requireVerification=true');
-                            return;
-                        }
-                    } catch (error) {
-                        console.error("Error refreshing auth state in ChatWidget:", error);
-                        setAuthError(true);
-                        return;
-                    }
-                }
-                
-                setAuthError(false);
-            } finally {
-                setAuthChecked(true);
-            }
-        };
-        
-        checkAuth();
-    }, [currentUser, reloadUser, navigate]);
-
-    // Render auth required message if needed
-    if (authChecked && (authError || !currentUser)) {
+    // Prevent access for unauthenticated users
+    if (!currentUser) {
         return (
             <div className={styles.authRequired}>
                 <h2>TherapyAI'a Hoş Geldiniz</h2>
@@ -99,16 +53,6 @@ const ChatWidget = () => {
                     <Link to="/login" className={styles.authButton}>Giriş Yap</Link>
                     <Link to="/signup" className={styles.authButton}>Kaydol</Link>
                 </div>
-            </div>
-        );
-    }
-    
-    // Show loading state while checking auth
-    if (!authChecked) {
-        return (
-            <div className={styles.loadingContainer}>
-                <div className={styles.loadingSpinner}></div>
-                <p>Yükleniyor...</p>
             </div>
         );
     }

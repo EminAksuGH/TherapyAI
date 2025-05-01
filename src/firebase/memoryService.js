@@ -16,7 +16,6 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import axios from "axios";
-import { getAuth } from "firebase/auth";
 
 // Maximum number of memories to retrieve for context
 const MAX_MEMORIES = 5;
@@ -279,40 +278,12 @@ export const ensureUserProfile = async (userId) => {
 };
 
 /**
- * Helper function to check if a user's email is verified
- * @param {string} userId - The user ID
- * @returns {Promise<boolean>} - True if email is verified, false otherwise
- */
-export const isEmailVerified = async () => {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-    
-    if (!currentUser) return false;
-    
-    // Reload user to get fresh token
-    try {
-        await currentUser.reload();
-        return currentUser.emailVerified;
-    } catch (error) {
-        console.error("Error checking email verification:", error);
-        return false;
-    }
-};
-
-/**
  * Update user's lastActive timestamp
  * @param {string} userId - The user ID
  */
 export const updateUserActivity = async (userId) => {
     try {
         if (!userId) return false;
-        
-        // First check if user's email is verified
-        const emailVerified = await isEmailVerified();
-        if (!emailVerified) {
-            console.log("Email not verified, cannot update user activity");
-            return false;
-        }
         
         const userRef = doc(db, "users", userId);
         await updateDoc(userRef, {
@@ -324,13 +295,8 @@ export const updateUserActivity = async (userId) => {
         console.error("Error updating user activity:", error);
         // Create the user profile if it doesn't exist
         try {
-            // Only attempt to create user profile if email is verified
-            const emailVerified = await isEmailVerified();
-            if (emailVerified) {
-                await ensureUserProfile(userId);
-                return true;
-            }
-            return false;
+            await ensureUserProfile(userId);
+            return true;
         } catch (innerError) {
             console.error("Error creating user profile:", innerError);
             return false;

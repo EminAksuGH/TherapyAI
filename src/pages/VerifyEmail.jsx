@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { applyActionCode, getAuth, reload } from 'firebase/auth';
-import { useAuth } from '../context/AuthContext';
 import styles from './Auth.module.css';
 
 const VerifyEmail = () => {
@@ -13,7 +12,6 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = getAuth();
-  const { currentUser, reloadUser, ensureUserDocument } = useAuth();
 
   useEffect(() => {
     document.body.classList.add('auth-page');
@@ -40,17 +38,6 @@ const VerifyEmail = () => {
         // Reload the auth state to update emailVerified status
         if (auth.currentUser) {
           await reload(auth.currentUser);
-          
-          // Force token refresh
-          await auth.currentUser.getIdToken(true);
-          
-          // Update user document in Firestore
-          if (auth.currentUser.emailVerified) {
-            await ensureUserDocument(auth.currentUser);
-          }
-          
-          // Use our custom reloadUser to update context
-          await reloadUser();
         }
         
         setVerificationState({
@@ -59,20 +46,11 @@ const VerifyEmail = () => {
           error: null
         });
         
-        // Check if user is already logged in
-        if (currentUser) {
-          // If logged in and verified, redirect to home/protected area
-          setTimeout(() => {
-            navigate('/profile'); // or any other protected route
-          }, 3000);
-        } else {
-          // If not logged in, redirect to login page
-          setTimeout(() => {
-            navigate('/login?emailVerified=true');
-          }, 3000);
-        }
+        // Automatically redirect to login page after 5 seconds
+        setTimeout(() => {
+          navigate('/login?emailVerified=true');
+        }, 5000);
       } catch (error) {
-        console.error("Email verification error:", error);
         setVerificationState({
           isVerifying: false,
           isSuccess: false,
@@ -86,7 +64,7 @@ const VerifyEmail = () => {
     return () => {
       document.body.classList.remove('auth-page');
     };
-  }, [location, navigate, auth, reloadUser, ensureUserDocument, currentUser]);
+  }, [location, navigate, auth]);
 
   return (
     <div className={styles.authContainer}>
@@ -102,12 +80,7 @@ const VerifyEmail = () => {
         
         {!verificationState.isVerifying && verificationState.isSuccess && (
           <div className={styles.success}>
-            <p>E-posta adresiniz başarıyla doğrulandı!</p>
-            {currentUser ? (
-              <p>Profilinize yönlendiriliyorsunuz...</p>
-            ) : (
-              <p>Giriş sayfasına yönlendiriliyorsunuz...</p>
-            )}
+            E-posta adresiniz başarıyla doğrulandı! 5 saniye içinde giriş sayfasına yönlendirileceksiniz.
           </div>
         )}
         
@@ -118,11 +91,7 @@ const VerifyEmail = () => {
         )}
         
         <div className={styles.authLinks}>
-          {currentUser ? (
-            <Link to="/profile">Profilime git</Link>
-          ) : (
-            <Link to="/login">Giriş sayfasına dön</Link>
-          )}
+          <Link to="/login">Giriş sayfasına dön</Link>
         </div>
       </div>
     </div>

@@ -16,7 +16,7 @@ const Login = () => {
     needsVerification: false,
     email: ''
   });
-  const { login, verifyEmail, currentUser, logout, reloadUser, ensureUserDocument } = useAuth();
+  const { login, verifyEmail, currentUser, logout, reloadUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -97,17 +97,8 @@ const Login = () => {
       setLoading(true);
       const userCredential = await login(formData.email, formData.password);
       
-      // Force token refresh first
-      await userCredential.user.getIdToken(true);
-      
-      // Then reload the user to get the latest token with claims
-      const freshUser = await reloadUser();
-      
-      console.log("Login: Email verification status after login:", 
-        freshUser ? freshUser.emailVerified : "No user after reload");
-      
-      // Re-check email verification status after reload
-      if (!freshUser || !freshUser.emailVerified) {
+      // Check if email is verified
+      if (!userCredential.user.emailVerified) {
         setError('E-posta adresiniz henüz doğrulanmadı. Lütfen önce e-posta adresinizi doğrulayın.');
         setEmailVerificationState({
           needsVerification: true,
@@ -116,26 +107,7 @@ const Login = () => {
         return;
       }
       
-      // Ensure the user document is created in Firestore
-      try {
-        await ensureUserDocument(freshUser);
-        console.log("User document created/updated after login");
-      } catch (docError) {
-        console.error("Error ensuring user document:", docError);
-        // Continue anyway, this shouldn't block login
-      }
-      
-      // Check if we were trying to access a protected route
-      const params = new URLSearchParams(location.search);
-      const from = params.get('from');
-      
-      if (from) {
-        // Navigate to the protected route we were trying to access
-        navigate(from);
-      } else {
-        // Navigate to home
-        navigate('/');
-      }
+      navigate('/');
     } catch (err) {
    
       if (
