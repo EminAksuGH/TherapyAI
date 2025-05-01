@@ -75,7 +75,7 @@ const Signup = () => {
         // Continue anyway, just log the error
       }
       
-      // Create user document in Firestore in a separate try/catch
+      // Create user document in Firestore
       try {
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           name: formData.name,
@@ -90,7 +90,10 @@ const Signup = () => {
         console.log("User document created in Firestore");
       } catch (firestoreErr) {
         console.error("Firestore error:", firestoreErr);
-        // Continue even if Firestore fails
+        // If there's a permission error, show a more meaningful message but continue
+        if (firestoreErr.code === 'permission-denied') {
+          console.log("Permission denied - this is expected until email verification");
+        }
       }
       
       setMessage('Hesabınız oluşturuldu! Lütfen e-posta adresinizi doğrulamak için gönderdiğimiz bağlantıya tıklayın.');

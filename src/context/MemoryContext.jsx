@@ -29,6 +29,13 @@ export function MemoryProvider({ children }) {
       }
 
       try {
+        // Don't try to initialize memory until email is verified
+        if (!currentUser.emailVerified) {
+          console.log("Email not verified yet, skipping memory initialization");
+          setLoading(false);
+          return;
+        }
+        
         // Ensure user profile exists
         await memoryService.ensureUserProfile(currentUser.uid);
         
@@ -67,6 +74,12 @@ export function MemoryProvider({ children }) {
         setLoading(false);
       } catch (error) {
         console.error("Error initializing memory:", error);
+        
+        // Special handling for permission errors - likely due to email not verified
+        if (error.code === 'permission-denied') {
+          console.log("Permission denied - email verification required for memory features");
+        }
+        
         // If there's an error, ensure memory arrays are empty
         setRecentMemories([]);
         setImportantMemories([]);
