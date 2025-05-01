@@ -7,9 +7,11 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   sendEmailVerification,
-  reload
+  reload,
+  getAuth
 } from 'firebase/auth';
-import { auth } from '../firebase/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase/firebase';
 
 const AuthContext = createContext();
 
@@ -53,15 +55,79 @@ export function AuthProvider({ children }) {
     return sendEmailVerification(auth.currentUser, actionCodeSettings);
   }
   
-  function reloadUser() {
+  // Enhanced reloadUser function that returns the updated user
+  async function reloadUser() {
     if (auth.currentUser) {
-      return reload(auth.currentUser);
+      try {
+        // Reload the auth state
+        await reload(auth.currentUser);
+        // Force token refresh to get updated claims
+        await auth.currentUser.getIdToken(true);
+        
+        // Update the currentUser state with the latest user
+        setCurrentUser({...auth.currentUser});
+        
+        // Return the updated user
+        return auth.currentUser;
+      } catch (error) {
+        console.error("Error reloading user:", error);
+        throw error;
+      }
     }
-    return Promise.resolve();
+    return Promise.resolve(null);
+  }
+
+  // Function to create or update user document in Firestore
+  async function ensureUserDocument(user) {
+    if (!user || !user.emailVerified) return;
+    
+    try {
+      // Check if the document already exists
+      const userRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        // Create new user document
+        await setDoc(userRef, {
+          name: user.displayName || '',
+          email: user.email,
+          emailVerified: true,
+          createdAt: new Date(),
+          preferences: {
+            memoryEnabled: true
+          }
+        });
+        console.log("User document created in Firestore after email verification");
+      } else if (!userDoc.data().emailVerified) {
+        // Update the emailVerified field if needed
+        await setDoc(userRef, {
+          emailVerified: true,
+        }, { merge: true });
+        console.log("User document updated with verified email status");
+      }
+    } catch (error) {
+      console.error("Error creating/updating user document:", error);
+    }
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Reload user to get fresh claims
+        try {
+          await reload(user);
+          // Force token refresh
+          await user.getIdToken(true);
+          
+          if (user.emailVerified) {
+            // If email is verified, ensure the user document exists
+            await ensureUserDocument(user);
+          }
+        } catch (error) {
+          console.error("Error reloading user:", error);
+        }
+      }
+      
       setCurrentUser(user);
       setLoading(false);
     });
@@ -77,7 +143,8 @@ export function AuthProvider({ children }) {
     resetPassword,
     updateUserProfile,
     verifyEmail,
-    reloadUser
+    reloadUser,
+    ensureUserDocument
   };
 
   return (

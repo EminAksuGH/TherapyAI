@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
+import MemoryManager from '../components/MemoryManager';
 import styles from './Profile.module.css';
 
 const Profile = () => {
@@ -84,6 +85,10 @@ const Profile = () => {
             Log Out
           </button>
         </div>
+      </div>
+      
+      <div className={styles.memorySection}>
+        <MemoryManager />
       </div>
     </div>
   );

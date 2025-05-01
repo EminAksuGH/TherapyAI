@@ -75,21 +75,11 @@ const Signup = () => {
         // Continue anyway, just log the error
       }
       
-      // Create user document in Firestore in a separate try/catch
-      try {
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          name: formData.name,
-          email: formData.email,
-          emailVerified: false,
-          createdAt: new Date()
-        });
-        console.log("User document created in Firestore");
-      } catch (firestoreErr) {
-        console.error("Firestore error:", firestoreErr);
-        // Continue even if Firestore fails
-      }
+      // Note: We won't attempt to create the Firestore document here as it will fail
+      // due to security rules requiring email verification.
+      // The document will be created when the user logs in after verification.
       
-      setMessage('Hesabınız oluşturuldu! Lütfen e-posta adresinizi doğrulamak için gönderdiğimiz bağlantıya tıklayın.');
+      setMessage('Hesabınız oluşturuldu! Lütfen e-posta adresinizi doğrulamak için gönderdiğimiz bağlantıya tıklayın. E-postanızı doğruladıktan sonra giriş yapabilirsiniz.');
       
       // Navigate to login after 5 seconds
       setTimeout(() => {

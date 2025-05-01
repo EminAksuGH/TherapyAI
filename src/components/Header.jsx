@@ -31,19 +31,39 @@ const Header = () => {
         e.preventDefault();
         
         try {
-          // Reload auth state before navigation
-          await reloadUser();
+          // Force a thorough reload of user auth data
+          if (currentUser) {
+            // Check if getIdToken exists before calling it
+            if (typeof currentUser.getIdToken === 'function') {
+              // Force token refresh
+              await currentUser.getIdToken(true);
+            } else {
+              console.log("getIdToken is not available, skipping token refresh");
+            }
+            
+            // Reload auth state
+            await reloadUser();
+            
+            console.log("Protected navigation: Email verified status:", currentUser.emailVerified);
+          }
           
           // After reload, check if email is verified
           if (!currentUser.emailVerified) {
-            navigate('/login?requireVerification=true');
+            console.log("Email not verified, redirecting to login");
+            navigate(`/login?requireVerification=true&from=${encodeURIComponent(path)}`);
           } else {
+            console.log("Email verified, navigating to:", path);
             navigate(path);
           }
         } catch (error) {
           console.error("Error refreshing auth state:", error);
-          navigate(path); // Navigate anyway
+          // Still navigate even if there's an error
+          navigate(path);
         }
+      } else if (!currentUser && isProtectedPath(path)) {
+        // User is not logged in trying to access protected route
+        e.preventDefault();
+        navigate(`/login?from=${encodeURIComponent(path)}`);
       }
     };
 

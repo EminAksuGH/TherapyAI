@@ -63,6 +63,55 @@
     font-size: 1.2rem;
 }
 
+.chatControls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.memoryButton {
+    background-color: transparent;
+    border: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-size: 1.2rem;
+    padding: 0;
+}
+
+.memoryButton.enabled {
+    background-color: var(--button-bg, #eae3f8);
+    border-color: var(--button-border, #d9cae8);
+    box-shadow: 0 1px 3px rgba(188, 129, 196, 0.15);
+}
+
+.memoryButton.disabled {
+    opacity: 0.6;
+}
+
+.memoryButton:hover {
+    background-color: var(--button-hover-bg, #d1c1e7);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(188, 129, 196, 0.25);
+}
+
+:root[data-theme='dark'] .memoryButton.enabled {
+    background-color: rgba(78, 78, 90, 0.2);
+    border-color: var(--button-bg, #4e4e5a);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme='dark'] .memoryButton:hover {
+    background-color: var(--button-hover-bg, #666670);
+    border-color: var(--button-hover-border, #9999dd);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
 .newChatButton {
     background-color: var(--button-bg, #eae3f8);
     color: #333;
@@ -239,8 +288,26 @@
     text-align: left;
     font-style: italic;
     color: var(--text-color);
-    margin: 6px 0 0 4px;
-    animation: messageAppear 0.4s ease-out;
+    opacity: 0.7;
+    margin: 10px 0;
+    animation: pulse 1.5s infinite ease-in-out;
+    padding: 8px 12px;
+    display: inline-block;
+    max-width: 100px;
+    border-radius: 8px;
+    background-color: transparent;
+}
+
+.loadingMessage p {
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.8;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+    100% { opacity: 0.3; }
 }
 
 .chatForm {
