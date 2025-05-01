@@ -10,8 +10,8 @@ import Signup from './pages/Signup';
 import ForgotPassword from './pages/ForgotPassword';
 import ChangePassword from './pages/ChangePassword';
 import VerifyEmail from './pages/VerifyEmail';
-import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
+import MemoryList from './pages/MemoryList';
 import ProtectedRoute from './components/ProtectedRoute';
 import FirebaseActionHandler from './pages/FirebaseActionHandler';
 import { AuthProvider } from './context/AuthContext';
@@ -39,9 +39,9 @@ const App = () => {
                             
                             {/* Protected routes - user must be logged in AND email verified */}
                             <Route element={<ProtectedRoute />}>
-                                <Route path="/profile" element={<Profile />} />
                                 <Route path="/edit-profile" element={<EditProfile />} />
                                 <Route path="/support" element={<Support />} />
+                                <Route path="/memory-list" element={<MemoryList />} />
                             </Route>
                         </Routes>
                     </main>

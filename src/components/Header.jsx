@@ -3,11 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useAuth } from '../context/AuthContext';
-import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaInfoCircle, FaHeadset } from 'react-icons/fa';
+import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaInfoCircle, FaHeadset, FaBrain, FaHeart } from 'react-icons/fa';
 
 // Function to check if a path is protected
 const isProtectedPath = (path) => {
-  return ['/support', '/profile', '/edit-profile'].includes(path);
+  return ['/support', '/edit-profile', '/memory-list'].includes(path);
 };
 
 const Header = () => {
@@ -136,18 +136,28 @@ const Header = () => {
                     }}
                     style={{"--item-index": 2}}
                 >
-                    <FaHeadset className={styles.menuIcon} /> Destek
+                    <FaHeart className={styles.menuIcon} /> Duygusal Destek
                 </Link>
                 
                 {/* Giriş Yap/Profil link in hamburger menu */}
                 {currentUser ? (
                     <>
+                        <Link to="/memory-list" 
+                            onClick={(e) => {
+                                setMenuOpen(false);
+                                handleProtectedNavigation(e, '/memory-list');
+                            }} 
+                            style={{"--item-index": 3}}
+                            className={styles.mobileOnly}
+                        >
+                            <FaBrain className={styles.menuIcon} /> Hafıza Listesi
+                        </Link>
                         <Link to="/edit-profile" 
                             onClick={(e) => {
                                 setMenuOpen(false);
                                 handleProtectedNavigation(e, '/edit-profile');
                             }} 
-                            style={{"--item-index": 3}}
+                            style={{"--item-index": 4}}
                             className={styles.mobileOnly}
                         >
                             <FaEdit className={styles.menuIcon} /> Profili Düzenle
@@ -158,7 +168,7 @@ const Header = () => {
                                 setMenuOpen(false);
                                 handleLogout(e);
                             }} 
-                            style={{"--item-index": 3}}
+                            style={{"--item-index": 5}}
                             className={`${styles.mobileOnly} ${styles.logoutLink}`}
                         >
                             <FaSignOutAlt className={styles.menuIcon} /> Çıkış Yap
@@ -190,6 +200,15 @@ const Header = () => {
                         </div>
                         {dropdownOpen && (
                             <div className={styles.profileDropdown}>
+                                <div 
+                                    className={styles.dropdownItem}
+                                    onClick={(e) => {
+                                        setDropdownOpen(false);
+                                        handleProtectedNavigation(e, '/memory-list');
+                                    }}
+                                >
+                                    <FaBrain /> Hafıza Listesi
+                                </div>
                                 <div 
                                     className={styles.dropdownItem}
                                     onClick={(e) => {

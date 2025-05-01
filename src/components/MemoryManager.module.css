@@ -5,7 +5,7 @@
     padding: 20px;
     background-color: var(--card-bg);
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .memoryHeader {
@@ -91,17 +91,17 @@ input:checked + .toggleSlider:before {
 .searchInput {
     flex: 1;
     padding: 10px 15px;
-    border: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    background-color: var(--input-bg, #fff);
+    background-color: var(--input-bg);
     color: var(--text-color);
     font-size: 1rem;
 }
 
 .searchButton {
-    background-color: var(--button-bg, #eae3f8);
-    color: #333;
-    border: 1px solid #d9cae8;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 10px 15px;
     font-size: 1rem;
@@ -111,7 +111,7 @@ input:checked + .toggleSlider:before {
 }
 
 .searchButton:hover {
-    background-color: #d1c1e7;
+    background-color: var(--button-hover-bg);
     transform: translateY(-1px);
 }
 
@@ -140,12 +140,12 @@ input:checked + .toggleSlider:before {
 }
 
 .tabButton:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--hover-bg);
 }
 
 .tabButton.active {
-    background-color: var(--button-bg, #eae3f8);
-    color: #333;
+    background-color: var(--button-bg);
+    color: var(--button-text);
     font-weight: 500;
 }
 
@@ -158,7 +158,7 @@ input:checked + .toggleSlider:before {
 .emptyState {
     text-align: center;
     padding: 40px 0;
-    color: var(--text-secondary, rgba(0, 0, 0, 0.6));
+    color: var(--text-secondary);
     font-size: 1.1rem;
     font-style: italic;
 }
@@ -166,10 +166,10 @@ input:checked + .toggleSlider:before {
 .memoryDisabled {
     text-align: center;
     padding: 40px 20px;
-    color: var(--text-secondary, rgba(0, 0, 0, 0.6));
-    background-color: rgba(0, 0, 0, 0.03);
+    color: var(--text-secondary);
+    background-color: var(--sidebar-bg);
     border-radius: 8px;
-    border: 1px dashed var(--border-color, rgba(229, 206, 235, 0.3));
+    border: 1px dashed var(--border-color);
 }
 
 .memoryDisabled p {
@@ -190,10 +190,10 @@ input:checked + .toggleSlider:before {
 }
 
 .memoryCard {
-    background-color: var(--card-inner-bg, #f9f6fc);
+    background-color: var(--sidebar-bg);
     border-radius: 8px;
     padding: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
 }
 
@@ -208,7 +208,7 @@ input:checked + .toggleSlider:before {
     align-items: center;
     margin-bottom: 10px;
     padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    border-bottom: 1px solid var(--border-color);
 }
 
 .memoryTopic {
@@ -218,7 +218,7 @@ input:checked + .toggleSlider:before {
 
 .memoryImportance {
     font-size: 0.9rem;
-    color: var(--text-secondary, rgba(0, 0, 0, 0.6));
+    color: var(--text-secondary);
 }
 
 .memoryContent {
@@ -232,18 +232,18 @@ input:checked + .toggleSlider:before {
 .memoryReasoning {
     margin-bottom: 15px;
     padding: 10px;
-    background-color: rgba(229, 206, 235, 0.1);
+    background-color: var(--hover-bg);
     border-radius: 6px;
     font-size: 0.9rem;
     line-height: 1.4;
-    border-left: 3px solid var(--button-bg, #bc81c4);
+    border-left: 3px solid var(--primary-link);
 }
 
 .reasoningLabel {
     font-weight: 600;
     display: block;
     margin-bottom: 5px;
-    color: var(--button-bg, #bc81c4);
+    color: var(--primary-link);
 }
 
 .memoryFooter {
@@ -262,27 +262,25 @@ input:checked + .toggleSlider:before {
 
 .deleteButton {
     background-color: transparent;
-    color: var(--text-secondary, rgba(0, 0, 0, 0.6));
-    border: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    color: var(--delete-button);
+    border: 1px solid var(--border-color);
     border-radius: 50%;
-    width: 22px;
-    height: 22px;
+    width: 25px;
+    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     font-size: 16px;
-    line-height: 1;
     padding: 0;
+    cursor: pointer;
     transition: all 0.2s ease;
-    opacity: 0.7;
+    line-height: 1;
 }
 
 .deleteButton:hover {
     background-color: rgba(255, 0, 0, 0.1);
-    border-color: rgba(255, 0, 0, 0.3);
-    color: rgba(255, 0, 0, 0.8);
-    opacity: 1;
+    color: var(--delete-button-hover);
+    border-color: var(--delete-button-hover);
 }
 
 .deleteButton:disabled {
@@ -292,42 +290,6 @@ input:checked + .toggleSlider:before {
 
 .memoryDate, .memoryRecalls {
     display: inline-block;
-}
-
-/* Dark mode adaptations */
-:root[data-theme='dark'] .memoryCard {
-    background-color: rgba(78, 78, 90, 0.2);
-}
-
-:root[data-theme='dark'] .searchInput {
-    background-color: rgba(78, 78, 90, 0.2);
-    border-color: var(--button-bg, #4e4e5a);
-}
-
-:root[data-theme='dark'] .searchButton {
-    background-color: rgba(78, 78, 90, 0.2);
-    border-color: var(--button-bg, #4e4e5a);
-    color: var(--text-color, #e0e0e0);
-}
-
-:root[data-theme='dark'] .searchButton:hover {
-    background-color: var(--button-hover-bg, #666670);
-}
-
-:root[data-theme='dark'] .tabButton.active {
-    background-color: rgba(78, 78, 90, 0.4);
-    color: var(--text-color, #e0e0e0);
-}
-
-:root[data-theme='dark'] .deleteButton {
-    color: var(--text-secondary, rgba(200, 200, 200, 0.6));
-    border-color: var(--border-color, rgba(100, 100, 120, 0.3));
-}
-
-:root[data-theme='dark'] .deleteButton:hover {
-    background-color: rgba(255, 0, 0, 0.2);
-    border-color: rgba(255, 0, 0, 0.3);
-    color: rgba(255, 80, 80, 0.9);
 }
 
 /* Responsive adjustments */
