@@ -189,14 +189,15 @@ export function MemoryProvider({ children }) {
           };
         }
 
-        // For explicit requests, we'll almost always save regardless of importance
+        // For explicit requests, we'll always save and set minimum importance to 6
         analysis.shouldStore = true;
+        // Ensure explicit save requests have at least 6/10 importance
+        if (analysis.importance < 6) {
+          analysis.importance = 6;
+        }
       } else {
-        // For normal messages, use a stricter threshold system
-        // Default to importance >= 6 for regular messages
-        // Only be more lenient for new users with very few memories
-        const MINIMUM_IMPORTANCE = existingMemories.length < 5 ? 5 : 
-                                  existingMemories.length < 15 ? 5 : 6;
+        // For normal messages, use consistent 6/10 importance threshold
+        const MINIMUM_IMPORTANCE = 6;
         
         // Only create memory if it's important enough and AI determines it's worth storing
         if (!analysis.shouldStore || analysis.importance < MINIMUM_IMPORTANCE) {
