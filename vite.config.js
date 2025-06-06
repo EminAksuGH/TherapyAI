@@ -7,8 +7,7 @@ export default defineConfig({
         host: '0.0.0.0',
         port: 10000,
         allowedHosts: [
-            'therapyai-production-4230.up.railway.app',
-            'therapyai-rm5c.onrender.com'
+            'therapyai-production-8fa0.up.railway.app',
         ],
     },
 });
