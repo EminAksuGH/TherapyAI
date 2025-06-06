@@ -29,6 +29,7 @@ const ChatWidget = () => {
     const [loading, setLoading] = useState(false);
     const [currentConversationId, setCurrentConversationId] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [allUserMemories, setAllUserMemories] = useState([]);
     const messagesEndRef = useRef(null);
     const chatLogRef = useRef(null);
     const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
@@ -60,6 +61,31 @@ const ChatWidget = () => {
     const detectLanguage = (text) => {
         const lang = franc(text);
         return lang === "und" ? "en" : lang;
+    };
+
+    // Load all user memories for AI context
+    const loadAllUserMemories = async () => {
+        if (!currentUser || !memoryEnabled) {
+            setAllUserMemories([]);
+            return;
+        }
+        
+        try {
+            const memoriesRef = collection(db, "users", currentUser.uid, "memories");
+            const q = query(memoriesRef, orderBy("importance", "desc"));
+            const querySnapshot = await getDocs(q);
+            
+            const memories = [];
+            querySnapshot.forEach((doc) => {
+                memories.push({ id: doc.id, ...doc.data() });
+            });
+            
+            setAllUserMemories(memories);
+            console.log(`Loaded ${memories.length} memories for AI context`);
+        } catch (error) {
+            console.error("Error loading all memories:", error);
+            setAllUserMemories([]);
+        }
     };
 
     const scrollToBottom = () => {
@@ -177,18 +203,27 @@ const ChatWidget = () => {
         }
     };
 
-    // Load chat history from localStorage or Firestore when component mounts
+    // Load chat history and memories when component mounts
     useEffect(() => {
         const loadChatHistory = async () => {
             if (currentUser) {
                 // User is logged in, fetch from Firestore
                 await loadMostRecentConversation();
+                // Load all memories for AI context
+                await loadAllUserMemories();
             }
             // No else branch for unauthenticated users since they can't use the chat
         };
         
         loadChatHistory();
     }, [currentUser]);
+
+    // Reload memories when memory settings change
+    useEffect(() => {
+        if (currentUser) {
+            loadAllUserMemories();
+        }
+    }, [memoryEnabled]);
     
     // Load messages when currentConversationId changes
     useEffect(() => {
@@ -310,33 +345,24 @@ const ChatWidget = () => {
             // Retrieve relevant memories for the current conversation
             let userMemoriesText = "Memory feature is disabled.";
             
-            if (memoryEnabled) {
-                // Check if the message contains a direct memory query like "do you remember X?"
-                const isMemoryQuery = /(?:do you (?:remember|know|recall)|(?:hatırlıyor|biliyor) mu(?:sun)?).*?/i.test(message);
-                
-                if (isMemoryQuery) {
-                    // Extract potential memory topic from the query
-                    // Remove question words and common phrases to get the potential topic
-                    const potentialTopic = message
-                        .replace(/(?:do you (?:remember|know|recall)|(?:hatırlıyor|biliyor) mu(?:sun)?)\s*/gi, '')
-                        .replace(/\?/g, '')
-                        .trim();
-                    
-                    // First try a direct search with the extracted topic
-                    userMemoriesText = await getFormattedMemories(potentialTopic);
-                    
-                    // If no specific memories found, use the empty memories instruction
-                    // This will explicitly instruct the AI to say it doesn't remember
-                    // Do not fall back to other memories when a specific memory is requested
-                    if (userMemoriesText.startsWith("No previous memories available")) {
-                        // Keep the "no memories" response without falling back to other memories
-                    } else {
-                        // Memory was found, use it
-                    }
-                } else {
-                    // For regular messages, use standard context retrieval
-                    userMemoriesText = await getFormattedMemories(message);
-                }
+            if (memoryEnabled && allUserMemories.length > 0) {
+                // Use ALL memories as context - much simpler and more effective!
+                userMemoriesText = `User's memories:
+${allUserMemories.map((memory, index) => 
+    `Memory ${index+1} [${memory.topic}]: ${memory.content} (Importance: ${memory.importance}/10)`
+).join('\n')}
+
+IMPORTANT INSTRUCTIONS FOR MEMORY USE:
+1. You have access to ALL of the user's memories above. Use them to provide personalized responses.
+2. If the user asks about their name, preferences, or anything mentioned in these memories, you can reference them naturally.
+3. Don't mention "I remember from our conversation" - just respond naturally as if you know them.
+4. For questions like "What's my name?" or "How should I address you?", use the relevant memory directly.
+5. Never invent or add details not in the memories above.
+6. Use the memories to provide context-aware, personalized emotional support.`;
+            } else if (memoryEnabled && allUserMemories.length === 0) {
+                userMemoriesText = `No previous memories available for this user.
+
+IMPORTANT: Since no memories exist yet, if the user asks if you remember something specific, you MUST truthfully respond that you don't recall that information. Be honest about not having memories while still showing willingness to discuss the topic.`;
             } else {
                 // Memory is disabled - provide clear instructions to the AI about this state
                 userMemoriesText = `Memory feature is currently DISABLED.
@@ -732,6 +758,11 @@ These are the kinds of warm, human responses you should provide when the user op
                             lastMessages,
                             activeConversationId
                         );
+                        
+                        // If a new memory was created, refresh our local memories
+                        if (result && result.memoryId) {
+                            await loadAllUserMemories();
+                        }
 
                         // If this was an explicit save request, send an additional system message to the AI
                         if (isExplicitSaveRequest) {

@@ -641,4 +641,86 @@ export const deleteLowImportanceMemories = async (userId, importanceThreshold = 
         console.error("Error deleting low importance memories:", error);
         throw error;
     }
+};
+
+/**
+ * Smart memory search using Firebase queries - no AI needed!
+ * @param {string} userId - The user ID
+ * @param {string} searchQuery - The search query
+ */
+export const smartSearchMemories = async (userId, searchQuery) => {
+    try {
+        const memoriesRef = collection(db, "users", userId, "memories");
+        
+        // Get ALL memories first (simpler and more reliable)
+        const allMemoriesQuery = query(memoriesRef, orderBy("importance", "desc"));
+        const querySnapshot = await getDocs(allMemoriesQuery);
+        
+        const memories = [];
+        const queryLower = searchQuery.toLowerCase();
+        
+        // Detect what type of query this is
+        const isNameQuery = /(?:ad|name|isim|neydi|what.*name|benim ad|my name)/i.test(searchQuery);
+        const isAddressQuery = /(?:hitap|address|call|diye|nasıl|how.*call|ne diye)/i.test(searchQuery);
+        
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const content = (data.content || '').toLowerCase();
+            const topic = (data.topic || '').toLowerCase();
+            
+            let relevanceScore = 0;
+            
+            // High priority matching for name/identity queries
+            if (isNameQuery || isAddressQuery) {
+                // Look for name-related content
+                if (content.includes('emin')) relevanceScore += 10;
+                if (content.includes('hitap')) relevanceScore += 8;
+                if (content.includes('diye')) relevanceScore += 6;
+                if (topic.includes('user requested memory')) relevanceScore += 8;
+                if (topic.includes('user')) relevanceScore += 4;
+            }
+            
+            // Regular keyword matching
+            const searchTerms = queryLower.split(' ').filter(term => term.length > 1);
+            searchTerms.forEach(term => {
+                if (content.includes(term)) relevanceScore += 2;
+                if (topic.includes(term)) relevanceScore += 1;
+            });
+            
+            // Always include memories with any relevance for name queries
+            if ((isNameQuery || isAddressQuery) && relevanceScore >= 4) {
+                memories.push({ 
+                    id: doc.id, 
+                    ...data, 
+                    relevanceScore 
+                });
+            } else if (relevanceScore > 0) {
+                memories.push({ 
+                    id: doc.id, 
+                    ...data, 
+                    relevanceScore 
+                });
+            }
+        });
+        
+        // Sort by relevance score then importance
+        memories.sort((a, b) => {
+            if (b.relevanceScore !== a.relevanceScore) {
+                return b.relevanceScore - a.relevanceScore;
+            }
+            return b.importance - a.importance;
+        });
+        
+        console.log(`Smart search for "${searchQuery}" found ${memories.length} memories`);
+        if (memories.length > 0) {
+            console.log('Top memory:', memories[0].content, 'Score:', memories[0].relevanceScore);
+        }
+        
+        return memories.slice(0, MAX_MEMORIES);
+        
+    } catch (error) {
+        console.error("Error in smart memory search:", error);
+        // Fallback to original simple search
+        return await searchMemories(userId, searchQuery);
+    }
 }; 

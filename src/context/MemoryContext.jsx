@@ -291,8 +291,8 @@ export function MemoryProvider({ children }) {
       let memories;
       
       if (searchQuery) {
-        // Search for relevant memories based on the query
-        memories = await memoryService.searchMemories(currentUser.uid, searchQuery);
+        // Use smart Firebase search to find relevant memories
+        memories = await memoryService.smartSearchMemories(currentUser.uid, searchQuery);
       } else {
         // Use important memories if no search query
         memories = importantMemories;
