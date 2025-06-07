@@ -11,7 +11,6 @@ const ProtectedRoute = () => {
       if (currentUser) {
         try {
           await reloadUser();
-          console.log("User auth state refreshed in ProtectedRoute");
         } catch (error) {
           console.error("Error refreshing auth state:", error);
         }

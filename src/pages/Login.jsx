@@ -36,7 +36,6 @@ const Login = () => {
         const reloadAuthState = async () => {
           try {
             await reloadUser();
-            console.log("Auth state reloaded after email verification");
           } catch (error) {
             console.error("Error reloading auth state:", error);
           }

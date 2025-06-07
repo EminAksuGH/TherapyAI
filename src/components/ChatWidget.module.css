@@ -266,6 +266,7 @@
     visibility: visible;
     transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
     width: 100%;
+    position: relative;
 }
 
 .aiMessage p {
@@ -282,6 +283,53 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     margin-bottom: 0;
     overflow-wrap: break-word;
+}
+
+.feedbackButton {
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%) scale(0.8);
+    background-color: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    opacity: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.aiMessage:hover .feedbackButton {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+}
+
+.feedbackButton:hover {
+    background-color: var(--hover-bg, #f0e6f8);
+    border-color: var(--accent-color, #bc81c4);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 4px 12px rgba(188, 129, 196, 0.2);
+}
+
+.feedbackButton:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* Dark theme support for feedback button */
+:root[data-theme='dark'] .feedbackButton {
+    background-color: var(--card-bg, #2a2a2a);
+    border-color: var(--border-color, #444);
+}
+
+:root[data-theme='dark'] .feedbackButton:hover {
+    background-color: var(--hover-bg, #333);
+    border-color: var(--accent-color, #bc81c4);
 }
 
 .loadingMessage {

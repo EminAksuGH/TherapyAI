@@ -69,7 +69,6 @@ const Signup = () => {
       // Send email verification
       try {
         await verifyEmail();
-        console.log("Email verification sent successfully");
       } catch (verifyError) {
         console.error("Email verification error:", verifyError);
         // Continue anyway, just log the error
@@ -87,12 +86,12 @@ const Signup = () => {
             memoryEnabled: true
           }
         });
-        console.log("User document created in Firestore");
+        
       } catch (firestoreErr) {
         console.error("Firestore error:", firestoreErr);
         // If there's a permission error, show a more meaningful message but continue
         if (firestoreErr.code === 'permission-denied') {
-          console.log("Permission denied - this is expected until email verification");
+          // This is expected until email verification - no need to log
         }
       }
       

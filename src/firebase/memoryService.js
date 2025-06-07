@@ -16,9 +16,32 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import axios from "axios";
+import { encryptMemoryContent, decryptMemoryContent } from "./encryptionService";
 
 // Maximum number of memories to retrieve for context
 const MAX_MEMORIES = 5;
+
+/**
+ * Capitalize the first letter of each word in a Turkish phrase correctly
+ * @param {string} text - The text to capitalize
+ */
+const capitalizeTurkish = (text) => {
+    if (!text || typeof text !== 'string') return text;
+    
+    return text.split(' ').map(word => {
+        if (!word) return word;
+        
+        const firstChar = word.charAt(0);
+        const restOfWord = word.slice(1);
+        
+        // Handle Turkish-specific capitalization for i and ı, otherwise use standard capitalization
+        const capitalizedFirstChar = firstChar === 'i' ? 'İ' : 
+                                     firstChar === 'ı' ? 'I' : 
+                                     firstChar.toUpperCase();
+        
+        return capitalizedFirstChar + restOfWord;
+    }).join(' ');
+};
 
 /**
  * Store a new memory for a user
@@ -35,8 +58,8 @@ export const createMemory = async (userId, topic, content, conversationId, impor
         const memoryRef = doc(collection(db, "users", userId, "memories"));
         
         const memoryData = {
-            topic,
-            content,
+            topic: capitalizeTurkish(topic), // Capitalize the topic with Turkish-specific rules
+            content: await encryptMemoryContent(content), // Encrypt memory content before saving
             conversationId,
             importance,
             createdAt: serverTimestamp(),
@@ -112,7 +135,12 @@ export const getMemory = async (userId, memoryId) => {
         const memorySnap = await getDoc(memoryRef);
         
         if (memorySnap.exists()) {
-            return { id: memorySnap.id, ...memorySnap.data() };
+            const data = memorySnap.data();
+            return { 
+                id: memorySnap.id, 
+                ...data,
+                content: await decryptMemoryContent(data.content) // Decrypt memory content after fetching
+            };
         } else {
             return null;
         }
@@ -141,9 +169,14 @@ export const getMemoriesByTopic = async (userId, topic, maxResults = MAX_MEMORIE
         const querySnapshot = await getDocs(q);
         const memories = [];
         
-        querySnapshot.forEach((doc) => {
-            memories.push({ id: doc.id, ...doc.data() });
-        });
+        for (const doc of querySnapshot.docs) {
+            const data = doc.data();
+            memories.push({ 
+                id: doc.id, 
+                ...data,
+                content: await decryptMemoryContent(data.content) // Decrypt memory content after fetching
+            });
+        }
         
         return memories;
     } catch (error) {
@@ -169,9 +202,14 @@ export const getImportantMemories = async (userId, maxResults = MAX_MEMORIES) =>
         const querySnapshot = await getDocs(q);
         const memories = [];
         
-        querySnapshot.forEach((doc) => {
-            memories.push({ id: doc.id, ...doc.data() });
-        });
+        for (const doc of querySnapshot.docs) {
+            const data = doc.data();
+            memories.push({ 
+                id: doc.id, 
+                ...data,
+                content: await decryptMemoryContent(data.content) // Decrypt memory content after fetching
+            });
+        }
         
         return memories;
     } catch (error) {
@@ -197,9 +235,14 @@ export const getRecentMemories = async (userId, maxResults = MAX_MEMORIES) => {
         const querySnapshot = await getDocs(q);
         const memories = [];
         
-        querySnapshot.forEach((doc) => {
-            memories.push({ id: doc.id, ...doc.data() });
-        });
+        for (const doc of querySnapshot.docs) {
+            const data = doc.data();
+            memories.push({ 
+                id: doc.id, 
+                ...data,
+                content: await decryptMemoryContent(data.content) // Decrypt memory content after fetching
+            });
+        }
         
         return memories;
     } catch (error) {
@@ -226,9 +269,10 @@ export const searchMemories = async (userId, searchQuery) => {
         const memories = [];
         const searchTerms = searchQuery.toLowerCase().split(' ');
         
-        querySnapshot.forEach((doc) => {
+        for (const doc of querySnapshot.docs) {
             const data = doc.data();
-            const content = (data.content || '').toLowerCase();
+            const decryptedContent = await decryptMemoryContent(data.content); // Decrypt for search
+            const content = (decryptedContent || '').toLowerCase();
             const topic = (data.topic || '').toLowerCase();
             
             // Check if any of the search terms are in the content or topic
@@ -237,9 +281,13 @@ export const searchMemories = async (userId, searchQuery) => {
             );
             
             if (matchesSearch) {
-                memories.push({ id: doc.id, ...data });
+                memories.push({ 
+                    id: doc.id, 
+                    ...data,
+                    content: decryptedContent // Use already decrypted content
+                });
             }
-        });
+        }
         
         // Sort by importance
         memories.sort((a, b) => b.importance - a.importance);
@@ -406,7 +454,7 @@ export const analyzeMemoryImportance = async (conversationText, previousContext 
         const isGenericMemoryQuery = /^(?:do you (?:remember|know|recall)|(?:hatırlıyor|biliyor) mu(?:sun)?).*?$/i.test(conversationText.trim());
         
         // Check if user is explicitly asking to remember/save something
-        const isExplicitSaveRequest = /(?:(?:remember|save|store|keep|hatırla|kaydet|sakla|tut) this|bunu (?:hatırla|kaydet|sakla|tut|aklında tut))/i.test(conversationText.trim());
+        const isExplicitSaveRequest = /(?:(?:remember|save|store|keep|hatırla|kaydet|sakla|tut) this|bunu (?:hatırla|kaydet|sakla|tut|aklında tut)|(?:bana|sana).+(?:hitap|böyle|şekilde).+istiyorum|(?:adım|ismim).+(?:bana|sana).+(?:hitap|çağır|de)|bundan böyle.+istiyorum)/i.test(conversationText.trim());
         
         // If user explicitly asks to remember something, we'll prioritize storing it
         if (isExplicitSaveRequest) {
@@ -418,8 +466,8 @@ export const analyzeMemoryImportance = async (conversationText, previousContext 
             return {
                 importance: 6, // Set medium-high importance by default for explicit requests
                 extractedMemory: extractedContent || conversationText,
-                topics: ["User Requested Memory"],
-                reasoning: "User explicitly requested to save this information",
+                topics: ["Kullanıcı Talebi"], // "User Request" in Turkish
+                reasoning: "Kullanıcı bu bilgiyi kaydetmek için özel olarak talepte bulundu",
                 shouldStore: true // Always store user-requested memories
             };
         }
@@ -438,8 +486,8 @@ export const analyzeMemoryImportance = async (conversationText, previousContext 
                 return {
                     importance: 2,
                     extractedMemory: conversationText.substring(0, 100),
-                    topics: ["Conversation"],
-                    reasoning: "Generic query or simple greeting without significant personal content",
+                    topics: ["Sohbet"],
+                    reasoning: "Genel sorgu veya önemli kişisel içerik içermeyen basit selamlama",
                     shouldStore: false
                 };
             }
@@ -461,8 +509,8 @@ export const analyzeMemoryImportance = async (conversationText, previousContext 
 Instructions:
 1. Analyze the given message and extract any potentially important information about the user
 2. Assign an importance score (1-10) based on how critical this information would be for future interactions
-3. Create a concise memory statement summarizing the important information
-4. Determine appropriate topics/tags for categorizing this memory
+3. Create a concise memory statement summarizing the important information IN TURKISH (since this is a Turkish therapy app)
+4. Determine appropriate topics/tags for categorizing this memory IN TURKISH
 
 For importance scoring - USE THE FULL RANGE (1-10) based on actual content, but be conservative:
 - 1-3: Very casual remarks, routine information, simple questions or basic preferences
@@ -480,11 +528,18 @@ Be conservative with scoring - memories should be meaningful:
 
 Focus especially on:
 - Personal relationships (with appropriate score based on significance)
+- Names and how the user wants to be addressed (CRITICAL - score 7+)
 - Emotional states or patterns
 - Life events (minor to major)
 - Expressed needs or challenges
 - Recurring themes or concerns
 - Cultural context or background
+- User preferences for interaction style
+
+IMPORTANT: Since this is a Turkish therapy application:
+- Write all memory content (extractedMemory) in TURKISH
+- Use Turkish topic names (e.g., "isim" instead of "name", "tercihler" instead of "preferences")
+- Keep the natural flow of Turkish language in memory descriptions
 
 Do not extract or remember:
 - Simple greetings or short exchanges without substance
@@ -502,12 +557,20 @@ About memory-related queries:
 - Assign appropriate scores to memory queries based on their actual content value
 - If a memory query reveals new information about the user's life or relationships, assign a score that matches its true significance
 
+Special attention to names and addressing:
+- When a user shares their name (e.g., "Benim adım X" / "My name is X"), this should be scored 7+ as it's critical for personalization
+- When a user requests specific addressing (e.g., "Bana X olarak hitap et" / "Address me as X"), this should be scored 7+ 
+- Turkish phrases like "bundan böyle", "istiyorum", "hitap et" often indicate important preferences
+- Names and addressing preferences are fundamental to building rapport and should always be remembered
+- For names: write in Turkish like "Kullanıcının adı X" instead of "User's name is X"
+- For addressing preferences: write in Turkish like "X adıyla hitap edilmek istiyor" instead of "Prefers to be addressed as X"
+
 Output JSON only with the following structure:
 {
   "importance": number, // 1-10, using the full scale but be conservative
-  "extractedMemory": string, // Concise memory statement
-  "topics": string[], // 1-3 relevant topic tags
-  "reasoning": string, // Brief explanation of why this information matters and justification for the importance score
+  "extractedMemory": string, // Concise memory statement IN TURKISH
+  "topics": string[], // 1-3 relevant topic tags IN TURKISH
+  "reasoning": string, // Brief explanation of why this information matters and justification for the importance score IN TURKISH
   "shouldStore": boolean // Whether this is worth storing as a new memory, default to false for importance < 6
 }`
                     },
@@ -558,11 +621,16 @@ Analyze this message and determine what should be remembered. Consider if this i
                 jsonData = {
                     importance: 5,
                     extractedMemory: conversationText.substring(0, 100),
-                    topics: ["Conversation"],
-                    reasoning: "Default memory creation",
+                    topics: ["Sohbet"],
+                    reasoning: "Varsayılan hafıza oluşturma",
                     shouldStore: existingMemories.length === 0 // Only store if no memories exist
                 };
             }
+        }
+        
+        // Capitalize topics with Turkish-specific rules
+        if (jsonData.topics && Array.isArray(jsonData.topics)) {
+            jsonData.topics = jsonData.topics.map(topic => capitalizeTurkish(topic));
         }
         
         // Set default for shouldStore if it's not present
@@ -588,8 +656,8 @@ Analyze this message and determine what should be remembered. Consider if this i
         return {
             importance: 3,
             extractedMemory: conversationText.substring(0, 100),
-            topics: ["Conversation"],
-            reasoning: "Default memory creation (analysis failed)",
+            topics: ["Sohbet"],
+            reasoning: "Varsayılan hafıza oluşturma (analiz başarısız)",
             shouldStore: false // Don't store on error
         };
     }
@@ -663,9 +731,10 @@ export const smartSearchMemories = async (userId, searchQuery) => {
         const isNameQuery = /(?:ad|name|isim|neydi|what.*name|benim ad|my name)/i.test(searchQuery);
         const isAddressQuery = /(?:hitap|address|call|diye|nasıl|how.*call|ne diye)/i.test(searchQuery);
         
-        querySnapshot.forEach((doc) => {
+        for (const doc of querySnapshot.docs) {
             const data = doc.data();
-            const content = (data.content || '').toLowerCase();
+            const decryptedContent = await decryptMemoryContent(data.content); // Decrypt for search
+            const content = (decryptedContent || '').toLowerCase();
             const topic = (data.topic || '').toLowerCase();
             
             let relevanceScore = 0;
@@ -691,17 +760,19 @@ export const smartSearchMemories = async (userId, searchQuery) => {
             if ((isNameQuery || isAddressQuery) && relevanceScore >= 4) {
                 memories.push({ 
                     id: doc.id, 
-                    ...data, 
+                    ...data,
+                    content: decryptedContent, // Use decrypted content
                     relevanceScore 
                 });
             } else if (relevanceScore > 0) {
                 memories.push({ 
                     id: doc.id, 
-                    ...data, 
+                    ...data,
+                    content: decryptedContent, // Use decrypted content
                     relevanceScore 
                 });
             }
-        });
+        }
         
         // Sort by relevance score then importance
         memories.sort((a, b) => {
@@ -711,10 +782,7 @@ export const smartSearchMemories = async (userId, searchQuery) => {
             return b.importance - a.importance;
         });
         
-        console.log(`Smart search for "${searchQuery}" found ${memories.length} memories`);
-        if (memories.length > 0) {
-            console.log('Top memory:', memories[0].content, 'Score:', memories[0].relevanceScore);
-        }
+
         
         return memories.slice(0, MAX_MEMORIES);
         

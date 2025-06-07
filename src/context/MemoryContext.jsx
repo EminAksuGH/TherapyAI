@@ -31,7 +31,7 @@ export function MemoryProvider({ children }) {
       try {
         // Don't try to initialize memory until email is verified
         if (!currentUser.emailVerified) {
-          console.log("Email not verified yet, skipping memory initialization");
+  
           setLoading(false);
           return;
         }
@@ -77,7 +77,7 @@ export function MemoryProvider({ children }) {
         
         // Special handling for permission errors - likely due to email not verified
         if (error.code === 'permission-denied') {
-          console.log("Permission denied - email verification required for memory features");
+  
         }
         
         // If there's an error, ensure memory arrays are empty
@@ -201,7 +201,6 @@ export function MemoryProvider({ children }) {
         
         // Only create memory if it's important enough and AI determines it's worth storing
         if (!analysis.shouldStore || analysis.importance < MINIMUM_IMPORTANCE) {
-          console.log(`Skipping memory creation: importance ${analysis.importance}/10 is below threshold ${MINIMUM_IMPORTANCE} or AI decided not to store it`);
           return null;
         }
       }

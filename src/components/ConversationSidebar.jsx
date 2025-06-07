@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db } from '../firebase/firebase';
 import { useAuth } from '../context/AuthContext';
 import { collection, query, where, orderBy, getDocs, doc, deleteDoc, writeBatch, onSnapshot, limit, startAfter } from 'firebase/firestore';
+import { decryptMessage } from '../firebase/encryptionService';
 import styles from './ConversationSidebar.module.css';
 
 const ConversationSidebar = ({ onSelectConversation, currentConversationId, onClose }) => {
@@ -13,6 +14,19 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
     const { currentUser } = useAuth();
     const sidebarRef = useRef(null);
     const CONVERSATIONS_PER_PAGE = 15;
+
+    // Helper function to decrypt conversation titles
+    const decryptConversationTitles = async (conversations) => {
+        const decryptedConversations = [];
+        for (const conversation of conversations) {
+            const decryptedTitle = conversation.title ? await decryptMessage(conversation.title) : 'Yeni Konuşma';
+            decryptedConversations.push({
+                ...conversation,
+                title: decryptedTitle
+            });
+        }
+        return decryptedConversations;
+    };
 
     // Function to handle scroll events for infinite scrolling
     const handleScroll = () => {
@@ -43,7 +57,7 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
         );
 
         // Use onSnapshot for real-time updates
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const unsubscribe = onSnapshot(q, async (querySnapshot) => {
             if (!querySnapshot.empty) {
                 const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
                 setLastVisible(lastDoc);
@@ -56,7 +70,9 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
                     }))
                     .filter(conv => conv.messageCount > 0);
 
-                setConversations(conversationsList);
+                // Decrypt conversation titles
+                const decryptedConversations = await decryptConversationTitles(conversationsList);
+                setConversations(decryptedConversations);
                 setHasMore(querySnapshot.docs.length === CONVERSATIONS_PER_PAGE);
             } else {
                 setConversations([]);
@@ -111,7 +127,9 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
                     }))
                     .filter(conv => conv.messageCount > 0);
                 
-                setConversations(prev => [...prev, ...newConversations]);
+                // Decrypt conversation titles
+                const decryptedNewConversations = await decryptConversationTitles(newConversations);
+                setConversations(prev => [...prev, ...decryptedNewConversations]);
                 setHasMore(querySnapshot.docs.length === CONVERSATIONS_PER_PAGE);
             } else {
                 setHasMore(false);
@@ -145,12 +163,10 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
             // Execute the batch
             if (messagesSnapshot.size > 0) {
                 await batch.commit();
-                console.log(`Deleted ${messagesSnapshot.size} messages from conversation ${conversationId}`);
             }
             
             // Now delete the conversation document
             await deleteDoc(doc(db, 'conversations', conversationId));
-            console.log(`Deleted conversation ${conversationId}`);
             
             // Update the local state to remove the deleted conversation
             setConversations(conversations.filter(conv => conv.id !== conversationId));
@@ -178,7 +194,13 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
         if (!date) return '';
         
         const now = new Date();
-        const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        const diffInMs = now.getTime() - date.getTime();
+        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+        
+        // Handle negative differences (future dates due to server/client time sync issues)
+        if (diffInMs < 0 || diffInDays < 0) {
+            return 'Bugün'; // Treat future dates as "today" to avoid "-1 gün önce"
+        }
         
         if (diffInDays === 0) {
             return 'Bugün';

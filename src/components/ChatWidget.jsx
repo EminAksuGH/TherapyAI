@@ -5,6 +5,8 @@ import styles from "./ChatWidget.module.css";
 import { db } from "../firebase/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useMemory } from "../context/MemoryContext";
+import { encryptMessage, decryptMessage, decryptMessages } from "../firebase/encryptionService";
+import { saveFeedback } from "../firebase/feedbackService";
 import { 
     collection, 
     addDoc, 
@@ -22,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { Link, Navigate } from "react-router-dom";
 import ConversationSidebar from "./ConversationSidebar";
+import FeedbackModal from "./FeedbackModal";
 
 const ChatWidget = () => {
     const [message, setMessage] = useState("");
@@ -30,6 +33,8 @@ const ChatWidget = () => {
     const [currentConversationId, setCurrentConversationId] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [allUserMemories, setAllUserMemories] = useState([]);
+    const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+    const [selectedFeedback, setSelectedFeedback] = useState(null);
     const messagesEndRef = useRef(null);
     const chatLogRef = useRef(null);
     const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
@@ -76,12 +81,16 @@ const ChatWidget = () => {
             const querySnapshot = await getDocs(q);
             
             const memories = [];
-            querySnapshot.forEach((doc) => {
-                memories.push({ id: doc.id, ...doc.data() });
-            });
+            for (const doc of querySnapshot.docs) {
+                const data = doc.data();
+                memories.push({ 
+                    id: doc.id, 
+                    ...data,
+                    content: await decryptMessage(data.content) // Decrypt memory content after fetching
+                });
+            }
             
             setAllUserMemories(memories);
-            console.log(`Loaded ${memories.length} memories for AI context`);
         } catch (error) {
             console.error("Error loading all memories:", error);
             setAllUserMemories([]);
@@ -102,18 +111,16 @@ const ChatWidget = () => {
         if (!currentUser) return null;
         
         try {
-            console.log("Creating new conversation for user:", currentUser.uid);
             
             // Create a conversation document
             const conversationRef = await addDoc(collection(db, "conversations"), {
                 userId: currentUser.uid,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                title: "Yeni Konuşma",
+                title: await encryptMessage("Yeni Konuşma"), // Encrypt initial conversation title
                 messageCount: 0 // Add a counter to track messages
             });
             
-            console.log("Successfully created conversation with ID:", conversationRef.id);
             return conversationRef.id;
         } catch (error) {
             console.error("Error creating new conversation:", error);
@@ -156,13 +163,13 @@ const ChatWidget = () => {
             const querySnapshot = await getDocs(q);
             const messages = [];
             
-            querySnapshot.forEach((doc) => {
+            for (const doc of querySnapshot.docs) {
                 const data = doc.data();
                 messages.push({
                     sender: data.sender,
-                    text: data.text
+                    text: await decryptMessage(data.text) // Decrypt message text after fetching
                 });
-            });
+            }
             
             setChatLog(messages);
             
@@ -194,7 +201,6 @@ const ChatWidget = () => {
             
             // Then load the selected conversation messages
             await loadConversationMessages(conversationId);
-            console.log("Switched to existing conversation:", conversationId);
             
             // Close sidebar on mobile after selection
             if (window.innerWidth <= 768) {
@@ -269,10 +275,10 @@ const ChatWidget = () => {
                 return null;
             }
             
-            // Add message to conversation's messages subcollection
+            // Add message to conversation's messages subcollection (encrypt the text)
             await addDoc(collection(db, "conversations", conversationIdToUse, "messages"), {
                 sender: message.sender,
-                text: message.text,
+                text: await encryptMessage(message.text), // Encrypt message text before saving
                 timestamp: serverTimestamp()
             });
             
@@ -298,7 +304,7 @@ const ChatWidget = () => {
                     }
                     
                     await setDoc(doc(db, "conversations", conversationIdToUse), {
-                        title: title
+                        title: await encryptMessage(title) // Encrypt conversation title before saving
                     }, { merge: true });
                 }
             }
@@ -373,7 +379,7 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
             }
 
             // Check if this is an explicit memory save request
-            const isExplicitSaveRequest = /(?:(?:remember|save|store|keep|hatırla|kaydet|sakla|tut) this|bunu (?:hatırla|kaydet|sakla|tut|aklında tut))/i.test(message.trim());
+            const isExplicitSaveRequest = /(?:(?:remember|save|store|keep|hatırla|kaydet|sakla|tut) this|bunu (?:hatırla|kaydet|sakla|tut|aklında tut)|(?:bana|sana).+(?:hitap|böyle|şekilde).+istiyorum|(?:adım|ismim).+(?:bana|sana).+(?:hitap|çağır|de)|bundan böyle.+istiyorum)/i.test(message.trim());
 
             const response = await axios.post(
                 "https://api.openai.com/v1/chat/completions",
@@ -750,7 +756,7 @@ These are the kinds of warm, human responses you should provide when the user op
                         const lastMessages = chatLog.slice(-3).map(msg => `${msg.sender}: ${msg.text}`).join('\n');
                         
                         // Check if this was an explicit memory save request
-                        const isExplicitSaveRequest = /(?:(?:remember|save|store|keep|hatırla|kaydet|sakla|tut) this|bunu (?:hatırla|kaydet|sakla|tut|aklında tut))/i.test(message.trim());
+                        const isExplicitSaveRequest = /(?:(?:remember|save|store|keep|hatırla|kaydet|sakla|tut) this|bunu (?:hatırla|kaydet|sakla|tut|aklında tut)|(?:bana|sana).+(?:hitap|böyle|şekilde).+istiyorum|(?:adım|ismim).+(?:bana|sana).+(?:hitap|çağır|de)|bundan böyle.+istiyorum)/i.test(message.trim());
                         
                         // Use AI to analyze and create memory with appropriate importance
                         const result = await createMemoryFromConversation(
@@ -802,8 +808,6 @@ These are the kinds of warm, human responses you should provide when the user op
                         // Don't interrupt the flow if memory creation fails
                     }
                 }
-            } else {
-                console.log("Skipping saving AI message - no conversation ID yet");
             }
             
             // Make sure to set loading to false here once all operations are complete
@@ -842,6 +846,44 @@ These are the kinds of warm, human responses you should provide when the user op
     // Toggle sidebar visibility
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
+    };
+
+    // Handle feedback button click
+    const handleFeedbackClick = (aiMessage, userMessage) => {
+        setSelectedFeedback({
+            aiMessage,
+            userMessage
+        });
+        setFeedbackModalOpen(true);
+    };
+
+    // Handle feedback submission
+    const handleFeedbackSubmit = async (feedbackData) => {
+        if (!currentUser) {
+            throw new Error("User not authenticated");
+        }
+
+        try {
+            await saveFeedback(
+                currentUser.uid,
+                feedbackData.userMessage,
+                feedbackData.aiMessage,
+                feedbackData.reason,
+                feedbackData.description
+            );
+            
+            // Show success message
+            alert("Geri bildiriminiz başarıyla gönderildi. Teşekkür ederiz!");
+        } catch (error) {
+            console.error("Error submitting feedback:", error);
+            throw error; // Re-throw to let modal handle the error
+        }
+    };
+
+    // Close feedback modal
+    const closeFeedbackModal = () => {
+        setFeedbackModalOpen(false);
+        setSelectedFeedback(null);
     };
 
     // Function to ensure chat log has appropriate height
@@ -929,12 +971,23 @@ These are the kinds of warm, human responses you should provide when the user op
                         <div className={`${styles.chatLog} ${chatLog.length > 0 ? styles.filled : ''}`} ref={chatLogRef}>
                             {chatLog.map((msg, index) => {
                                 const isLast = index === chatLog.length - 1;
+                                const userMessage = msg.sender === "ai" && index > 0 ? chatLog[index - 1]?.text : null;
+                                
                                 return (
                                     <div
                                         key={index}
                                         className={`${msg.sender === "ai" ? styles.aiMessage : styles.userMessage} ${isLast ? styles.lastMessage : ''}`}
                                     >
                                         <p>{msg.text}</p>
+                                        {msg.sender === "ai" && userMessage && (
+                                            <button 
+                                                className={styles.feedbackButton}
+                                                onClick={() => handleFeedbackClick(msg.text, userMessage)}
+                                                title="Bu yanıt hakkında geri bildirim ver"
+                                            >
+                                                💬
+                                            </button>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -970,6 +1023,15 @@ These are the kinds of warm, human responses you should provide when the user op
             {sidebarOpen && (
                 <div className={styles.overlay} onClick={toggleSidebar}></div>
             )}
+
+            {/* Feedback Modal */}
+            <FeedbackModal
+                isOpen={feedbackModalOpen}
+                onClose={closeFeedbackModal}
+                onSubmit={handleFeedbackSubmit}
+                aiMessage={selectedFeedback?.aiMessage}
+                userMessage={selectedFeedback?.userMessage}
+            />
         </div>
     );
 };
