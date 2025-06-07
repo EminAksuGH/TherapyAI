@@ -8,6 +8,7 @@ export default defineConfig({
         port: 10000,
         allowedHosts: [
             'therapyai-production-8fa0.up.railway.app',
+            'eminaksu.tr'
         ],
     },
 });
