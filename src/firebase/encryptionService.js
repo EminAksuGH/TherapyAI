@@ -1,6 +1,6 @@
 // Get encryption key from environment variables
 // In production, consider using a more secure key management solution
-const ENCRYPTION_KEY_STRING = import.meta.env.VITE_ENCRYPTION_KEY || 'default-key-change-in-production-must-be-32-chars';
+const ENCRYPTION_KEY_STRING = import.meta.env.VITE_ENCRYPTION_KEY;
 
 // Convert string key to CryptoKey object
 let cryptoKey = null;
