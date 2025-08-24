@@ -58,11 +58,12 @@ const getCryptoKey = async () => {
     
     const rawKey = deriveKey();
     
-    if (!window.crypto?.subtle) {
-        throw new Error('Web Crypto API not available in this browser');
+    const cryptoObj = globalThis.crypto || (typeof window !== 'undefined' ? window.crypto : undefined);
+    if (!cryptoObj?.subtle) {
+        throw new Error('Web Crypto API not available in this environment');
     }
     
-    cachedCryptoKey = await window.crypto.subtle.importKey(
+    cachedCryptoKey = await cryptoObj.subtle.importKey(
         'raw',
         rawKey,
         {
@@ -99,10 +100,14 @@ export const encryptMessage = async (plaintext) => {
         const data = encoder.encode(plaintext);
         
         // Generate a random 96-bit (12 bytes) IV for GCM
-        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const cryptoObj = globalThis.crypto || (typeof window !== 'undefined' ? window.crypto : undefined);
+        if (!cryptoObj?.getRandomValues) {
+            throw new Error('Web Crypto API not available in this environment');
+        }
+        const iv = cryptoObj.getRandomValues(new Uint8Array(12));
         
         // Encrypt the data
-        const encryptedData = await window.crypto.subtle.encrypt(
+        const encryptedData = await (globalThis.crypto || window.crypto).subtle.encrypt(
             {
                 name: 'AES-GCM',
                 iv: iv,
@@ -164,7 +169,7 @@ export const decryptMessage = async (encryptedMessage) => {
         const encryptedData = combined.slice(12);
         
         // Decrypt the data
-        const decryptedData = await window.crypto.subtle.decrypt(
+        const decryptedData = await (globalThis.crypto || window.crypto).subtle.decrypt(
             {
                 name: 'AES-GCM',
                 iv: iv,
