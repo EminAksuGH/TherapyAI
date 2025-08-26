@@ -16,7 +16,7 @@ const Home = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7 }}
                 >
-                    TherapyAI'ya Hoş Geldiniz
+                    TherapyAI'a Hoş Geldiniz
                 </motion.h1>
                 
                 <motion.p 
