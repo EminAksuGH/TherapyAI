@@ -126,8 +126,6 @@ export const encryptMessage = async (plaintext) => {
         // Convert to base64 for storage/transmission
         const result = arrayBufferToBase64(combined);
         
-        console.log(`✅ Encrypted message (Web): ${plaintext.substring(0, 20)}... -> ${result.length} chars`);
-        
         return result;
     } catch (error) {
         console.error('❌ Encryption error:', error);
@@ -182,8 +180,6 @@ export const decryptMessage = async (encryptedMessage) => {
         // Convert back to string
         const decoder = new TextDecoder();
         const result = decoder.decode(decryptedData);
-        
-        console.log(`✅ Decrypted message (Web): ${result.substring(0, 20)}...`);
         
         return result;
     } catch (error) {
