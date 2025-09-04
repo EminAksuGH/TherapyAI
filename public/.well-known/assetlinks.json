@@ -3,7 +3,7 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.anonymous.therapyai",
+      "package_name": "com.esydelabs.therapyai",
       "sha256_cert_fingerprints": [
         "38:07:56:8C:72:1A:95:A4:D7:0E:71:52:29:DD:37:1F:84:B4:19:2E:1B:CD:D9:28:82:ED:85:A6:D1:4F:BB:95",
         "75:BB:FA:08:24:75:F7:1A:25:1C:3F:E9:D8:DD:B4:41:9F:F7:15:7C:4B:41:82:FE:FA:E1:13:B2:AD:7D:05:70"
