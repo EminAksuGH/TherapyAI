@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Conversations collection
+    match /conversations/{conversationId} {
+      allow read: if request.auth != null && 
+                   request.auth.token.email_verified && 
+                   resource.data.userId == request.auth.uid;
+
+      allow create: if request.auth != null && 
+                     request.auth.token.email_verified && 
+                     request.resource.data.userId == request.auth.uid;
+
+      allow update, delete: if request.auth != null && 
+                             request.auth.token.email_verified && 
+                             resource.data.userId == request.auth.uid;
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read, write, delete: if request.auth != null && 
+                                   request.auth.token.email_verified && 
+                                   get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid;
+      }
+    }
+
+    // Memories collection (top-level) - Main memories structure
+    match /memories/{memoryId} {
+      // Simplified: write includes create, update, delete
+      allow read, write, delete: if request.auth != null && 
+                                  request.auth.token.email_verified && 
+                                  resource.data.userId == request.auth.uid;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // User can read their own data regardless of email verification
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Allow initial data creation at registration, regardless of email verification
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Allow all updates if email is verified
+      allow write: if request.auth != null && 
+                    request.auth.uid == userId && 
+                    request.auth.token.email_verified;
+
+      // Non-verified email users can update specific fields only
+      allow update: if request.auth != null && 
+                     request.auth.uid == userId && 
+                     !request.auth.token.email_verified && 
+                     (
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailVerified']) ||
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActive']) ||
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActive', 'preferences'])
+                     );
+
+      // Allow user to delete their own account data (for account deletion)
+      allow delete: if request.auth != null && 
+                     request.auth.uid == userId && 
+                     request.auth.token.email_verified;
+    }
+
+    // Feedback collection - for AI response feedback
+    match /feedback/{feedbackId} {
+      // Users can only create feedback
+      allow create: if request.auth != null && 
+                     request.auth.token.email_verified &&
+                     request.resource.data.userId == request.auth.uid &&
+                     // Ensure required fields are present
+                     request.resource.data.keys().hasAll(['userId', 'userMessage', 'aiMessage', 'reason', 'description', 'createdAt', 'status']) &&
+                     // Ensure status is set to 'pending' for new feedback
+                     request.resource.data.status == 'pending' &&
+                     // Validate reason is one of the allowed values
+                     request.resource.data.reason in ['inappropriate', 'not_enough', 'incorrect', 'unhelpful', 'too_generic', 'off_topic', 'technical_issue', 'other'] &&
+                     // Ensure description is not empty and not too long
+                     request.resource.data.description is string &&
+                     request.resource.data.description.size() > 0 &&
+                     request.resource.data.description.size() <= 1000;
+      
+      // Allow users to delete their own feedback during account deletion
+      allow delete: if request.auth != null && 
+                     request.auth.token.email_verified && 
+                     resource.data.userId == request.auth.uid;
+      
+      // TODO: Add admin rules later if needed
+      // For now, admins can access via Firebase Admin SDK which bypasses these rules
+      allow read, update: if false;
+    }
+  }
+}

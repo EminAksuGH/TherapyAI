@@ -120,7 +120,15 @@ export function AuthProvider({ children }) {
       
     } catch (error) {
       console.error('Error deleting user data:', error);
-      throw error;
+      
+      // Provide more specific error handling
+      if (error.code === 'permission-denied') {
+        throw new Error('Firestore güvenlik kuralları hesap silme işlemine izin vermiyor. Lütfen geliştirici ile iletişime geçin.');
+      } else if (error.code === 'unauthenticated') {
+        throw new Error('Kimlik doğrulama gerekli. Lütfen tekrar giriş yapın.');
+      } else {
+        throw new Error('Hesap verileri silinirken bir hata oluştu: ' + error.message);
+      }
     }
   }
 

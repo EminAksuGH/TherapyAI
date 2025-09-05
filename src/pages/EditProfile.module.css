@@ -276,31 +276,37 @@
 }
 
 .passwordInputContainer input {
-  padding-right: 45px;
+  padding-right: 50px !important;
 }
 
 .passwordToggle {
   position: absolute;
-  right: 12px;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
-  color: var(--text-secondary, #666);
+  color: var(--text-color, #666);
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  transition: color 0.2s ease;
-  z-index: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  z-index: 2;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .passwordToggle:hover {
   color: var(--primary-link);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .passwordToggle:focus {
-  outline: none;
+  outline: 2px solid var(--primary-link);
+  outline-offset: 1px;
   color: var(--primary-link);
 }
 
@@ -310,8 +316,9 @@
 }
 
 .passwordToggle svg {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 
 /* Responsive adjustments */
