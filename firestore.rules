@@ -18,18 +18,15 @@ service cloud.firestore {
 
       // Messages subcollection
       match /messages/{messageId} {
-        allow read, write, delete: if request.auth != null && 
-                                   request.auth.token.email_verified && 
-                                   get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid;
+        allow read, write: if request.auth != null && 
+                            request.auth.token.email_verified && 
+                            get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid;
+        
+        // Allow delete for account deletion - user can delete their own messages
+        allow delete: if request.auth != null && 
+                       request.auth.token.email_verified && 
+                       get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid;
       }
-    }
-
-    // Memories collection (top-level) - Main memories structure
-    match /memories/{memoryId} {
-      // Simplified: write includes create, update, delete
-      allow read, write, delete: if request.auth != null && 
-                                  request.auth.token.email_verified && 
-                                  resource.data.userId == request.auth.uid;
     }
 
     // Users collection
@@ -45,7 +42,7 @@ service cloud.firestore {
                     request.auth.uid == userId && 
                     request.auth.token.email_verified;
 
-      // Non-verified email users can update specific fields only
+      // Non-verified email users can update lastActive or emailVerified fields
       allow update: if request.auth != null && 
                      request.auth.uid == userId && 
                      !request.auth.token.email_verified && 
@@ -55,15 +52,40 @@ service cloud.firestore {
                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActive', 'preferences'])
                      );
 
-      // Allow user to delete their own account data (for account deletion)
+      // Allow users to delete their own account data (for account deletion)
       allow delete: if request.auth != null && 
-                     request.auth.uid == userId && 
-                     request.auth.token.email_verified;
+                     request.auth.token.email_verified && 
+                     request.auth.uid == userId;
+      
+      // Memories subcollection - requires email verification
+      match /memories/{memoryId} {
+        allow read, write: if request.auth != null && 
+                            request.auth.uid == userId && 
+                            request.auth.token.email_verified;
+        
+        // Allow delete for account deletion - user can delete their own memories
+        allow delete: if request.auth != null && 
+                       request.auth.token.email_verified && 
+                       request.auth.uid == userId;
+      }
+    }
+
+    // Global memories collection (if using top-level memories instead of subcollection)
+    match /memories/{memoryId} {
+      allow read, write: if request.auth != null && 
+                          request.auth.token.email_verified && 
+                          resource.data.userId == request.auth.uid;
+      
+      // Allow delete for account deletion - user can delete their own memories
+      allow delete: if request.auth != null && 
+                     request.auth.token.email_verified && 
+                     resource.data.userId == request.auth.uid;
     }
 
     // Feedback collection - for AI response feedback
     match /feedback/{feedbackId} {
-      // Users can only create feedback
+      // Users can only create feedback, not read or update
+      // Only authenticated users with verified email can submit feedback
       allow create: if request.auth != null && 
                      request.auth.token.email_verified &&
                      request.resource.data.userId == request.auth.uid &&
@@ -78,13 +100,8 @@ service cloud.firestore {
                      request.resource.data.description.size() > 0 &&
                      request.resource.data.description.size() <= 1000;
       
-      // Allow users to delete their own feedback during account deletion
-      allow delete: if request.auth != null && 
-                     request.auth.token.email_verified && 
-                     resource.data.userId == request.auth.uid;
-      
-      // TODO: Add admin rules later if needed
-      // For now, admins can access via Firebase Admin SDK which bypasses these rules
+      // No read or update permissions for regular users
+      // Only admins should be able to read and update feedback
       allow read, update: if false;
     }
   }
