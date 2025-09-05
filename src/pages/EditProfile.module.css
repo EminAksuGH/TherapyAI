@@ -166,6 +166,154 @@
   color: var(--text-color);
 }
 
+/* Delete Account Styles */
+.dangerZone {
+  margin-top: 30px;
+  padding: 20px;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  background-color: rgba(220, 38, 38, 0.05);
+}
+
+.dangerZone h3 {
+  color: #dc2626;
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+}
+
+.dangerZone p {
+  color: var(--text-color);
+  margin: 0 0 15px 0;
+  font-size: 14px;
+}
+
+.deleteButton {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.deleteButton:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modalContent h3 {
+  color: #dc2626;
+  margin: 0 0 15px 0;
+  text-align: center;
+}
+
+.modalContent p {
+  color: var(--text-color);
+  margin: 0 0 20px 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.confirmDeleteButton {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex: 1;
+}
+
+.confirmDeleteButton:hover {
+  background-color: #b91c1c;
+}
+
+.confirmDeleteButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Password Toggle Styles */
+.passwordInputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordInputContainer input {
+  padding-right: 45px;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #666);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: color 0.2s ease;
+  z-index: 1;
+}
+
+.passwordToggle:hover {
+  color: var(--primary-link);
+}
+
+.passwordToggle:focus {
+  outline: none;
+  color: var(--primary-link);
+}
+
+.passwordToggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.passwordToggle svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   .editProfileCard {
@@ -182,5 +330,14 @@
   
   .cancelButton, .saveButton {
     width: 100%;
+  }
+  
+  .modalContent {
+    padding: 20px;
+    max-width: 350px;
+  }
+  
+  .modalActions {
+    flex-direction: column;
   }
 } 

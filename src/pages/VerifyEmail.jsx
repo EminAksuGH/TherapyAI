@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { applyActionCode, getAuth, reload } from 'firebase/auth';
+import AuthRedirect from '../components/AuthRedirect';
 import styles from './Auth.module.css';
 
 const VerifyEmail = () => {
@@ -67,9 +68,10 @@ const VerifyEmail = () => {
   }, [location, navigate, auth]);
 
   return (
-    <div className={styles.authContainer}>
-      <div className={styles.authForm}>
-        <h2>E-posta Doğrulama</h2>
+    <AuthRedirect requireEmailVerification={true}>
+      <div className={styles.authContainer}>
+        <div className={styles.authForm}>
+          <h2>E-posta Doğrulama</h2>
         
         {verificationState.isVerifying && (
           <div className={styles.loadingContainer}>
@@ -93,8 +95,9 @@ const VerifyEmail = () => {
         <div className={styles.authLinks}>
           <Link to="/login">Giriş sayfasına dön</Link>
         </div>
+        </div>
       </div>
-    </div>
+    </AuthRedirect>
   );
 };
 

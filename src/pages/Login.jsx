@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthRedirect from '../components/AuthRedirect';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from './Auth.module.css';
 
 const Login = () => {
@@ -12,6 +14,7 @@ const Login = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [emailVerificationState, setEmailVerificationState] = useState({
     needsVerification: false,
     email: ''
@@ -130,11 +133,12 @@ const Login = () => {
   };
   
   return (
-    <div className={styles.authContainer}>
-      <div className={styles.authForm}>
-        <h2>Giriş Yap</h2>
-        {error && <div className={styles.error}>{error}</div>}
-        {message && <div className={styles.success}>{message}</div>}
+    <AuthRedirect requireEmailVerification={true}>
+      <div className={styles.authContainer}>
+        <div className={styles.authForm}>
+          <h2>Giriş Yap</h2>
+          {error && <div className={styles.error}>{error}</div>}
+          {message && <div className={styles.success}>{message}</div>}
         
         {emailVerificationState.needsVerification ? (
           <div className={styles.verificationNotice}>
@@ -169,14 +173,24 @@ const Login = () => {
 
             <div className={styles.formGroup}>
               <label htmlFor="password">Parola</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+              <div className={styles.passwordInputContainer}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
 
             <button 
@@ -200,8 +214,9 @@ const Login = () => {
             </div>
           </>
         )}
+        </div>
       </div>
-    </div>
+    </AuthRedirect>
   );
 };
 

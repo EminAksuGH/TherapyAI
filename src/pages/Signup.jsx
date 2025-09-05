@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
+import AuthRedirect from '../components/AuthRedirect';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from './Auth.module.css';
 
 const Signup = () => {
@@ -16,6 +18,8 @@ const Signup = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signup, verifyEmail } = useAuth();
   const navigate = useNavigate();
 
@@ -122,11 +126,12 @@ const Signup = () => {
   };
 
   return (
-    <div className={styles.authContainer}>
-      <div className={styles.authForm}>
-        <h2>Hesap Oluştur</h2>
-        {error && <div className={styles.error}>{error}</div>}
-        {message && <div className={styles.success}>{message}</div>}
+    <AuthRedirect requireEmailVerification={true}>
+      <div className={styles.authContainer}>
+        <div className={styles.authForm}>
+          <h2>Hesap Oluştur</h2>
+          {error && <div className={styles.error}>{error}</div>}
+          {message && <div className={styles.success}>{message}</div>}
         
         {!message ? (
           <form onSubmit={handleSubmit}>
@@ -156,26 +161,46 @@ const Signup = () => {
 
             <div className={styles.formGroup}>
               <label htmlFor="password">Parola</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+              <div className={styles.passwordInputContainer}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
 
             <div className={styles.formGroup}>
               <label htmlFor="confirmPassword">Parolayı Onaylayın</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-              />
+              <div className={styles.passwordInputContainer}>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
 
             <button 
@@ -197,8 +222,9 @@ const Signup = () => {
             Zaten bir hesabınız var mı? <Link to="/login">Giriş Yap</Link>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </AuthRedirect>
   );
 };
 

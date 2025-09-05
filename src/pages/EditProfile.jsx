@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { db } from '../firebase/firebase';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from './EditProfile.module.css';
 
 const EditProfile = () => {
@@ -18,7 +19,14 @@ const EditProfile = () => {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const { currentUser } = useAuth();
+  const [deleteAccountVisible, setDeleteAccountVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const { currentUser, deleteAccount } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -174,6 +182,55 @@ const EditProfile = () => {
     }
   };
 
+  // Delete Account Functions
+  const handleDeleteAccount = () => {
+    if (window.confirm(
+      'Bu işlem geri alınamaz! Hesabınızı ve tüm verilerinizi kalıcı olarak silecektir. Devam etmek istediğinizden emin misiniz?'
+    )) {
+      setDeleteAccountVisible(true);
+    }
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (!currentUser) return;
+    
+    setIsDeleting(true);
+    setError('');
+    
+    try {
+      await deleteAccount(deletePassword);
+      
+      // Close the modal immediately
+      setDeleteAccountVisible(false);
+      setIsDeleting(false);
+      setDeletePassword('');
+      
+      // Navigate to home page and show success message
+      navigate('/', { replace: true });
+      
+      // Show success message after navigation
+      setTimeout(() => {
+        alert('Hesap verileriniz başarıyla silindi ve oturumunuz kapatıldı.');
+      }, 100);
+      
+    } catch (error) {
+      setIsDeleting(false);
+      console.error('Delete account error:', error);
+      
+      let errorMessage = 'Hesap silinirken bir hata oluştu. Lütfen tekrar deneyin.';
+      
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Şifre yanlış. Lütfen doğru şifrenizi girin.';
+      } else if (error.code === 'auth/requires-recent-login') {
+        errorMessage = 'Güvenlik nedeniyle lütfen çıkış yapıp tekrar giriş yapın, sonra hesabınızı silin.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+    }
+  };
+
   if (loading) return <div className={styles.loading}>Yükleniyor...</div>;
 
   return (
@@ -221,38 +278,68 @@ const EditProfile = () => {
             <h3>Şifre Değiştir</h3>
             <div className={styles.formGroup}>
               <label htmlFor="currentPassword">Mevcut Şifre</label>
-              <input
-                type="password"
-                id="currentPassword"
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={handleChange}
-                placeholder="Mevcut şifreniz"
-              />
+              <div className={styles.passwordInputContainer}>
+                <input
+                  type={showCurrentPassword ? "text" : "password"}
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleChange}
+                  placeholder="Mevcut şifreniz"
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  aria-label={showCurrentPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                >
+                  {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
             
             <div className={styles.formGroup}>
               <label htmlFor="newPassword">Yeni Şifre</label>
-              <input
-                type="password"
-                id="newPassword"
-                name="newPassword"
-                value={formData.newPassword}
-                onChange={handleChange}
-                placeholder="Yeni şifre"
-              />
+              <div className={styles.passwordInputContainer}>
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  id="newPassword"
+                  name="newPassword"
+                  value={formData.newPassword}
+                  onChange={handleChange}
+                  placeholder="Yeni şifre"
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  aria-label={showNewPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                >
+                  {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
             
             <div className={styles.formGroup}>
               <label htmlFor="confirmPassword">Yeni Şifre (Tekrar)</label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Yeni şifre tekrar"
-              />
+              <div className={styles.passwordInputContainer}>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Yeni şifre tekrar"
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                >
+                  {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
             </div>
             <small className={styles.passwordNote}>Şifrenizi değiştirmek istemiyorsanız bu alanları boş bırakın.</small>
           </div>
@@ -274,7 +361,75 @@ const EditProfile = () => {
             </button>
           </div>
         </form>
+
+        {/* Delete Account Section */}
+        <div className={styles.dangerZone}>
+          <h3>Tehlike Bölgesi</h3>
+          <p>Bu işlem geri alınamaz. Hesabınızı ve tüm verilerinizi kalıcı olarak siler.</p>
+          <button 
+            type="button" 
+            className={styles.deleteButton}
+            onClick={handleDeleteAccount}
+          >
+            Hesabı Sil
+          </button>
+        </div>
       </div>
+
+      {/* Delete Account Modal */}
+      {deleteAccountVisible && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <h3>Hesabı Sil</h3>
+            <p>Bu işlem geri alınamaz! Tüm verileriniz kalıcı olarak silinecektir.</p>
+            <div className={styles.formGroup}>
+              <label htmlFor="deletePassword">Şifrenizi girin:</label>
+              <div className={styles.passwordInputContainer}>
+                <input
+                  type={showDeletePassword ? "text" : "password"}
+                  id="deletePassword"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Mevcut şifreniz"
+                  disabled={isDeleting}
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowDeletePassword(!showDeletePassword)}
+                  disabled={isDeleting}
+                  aria-label={showDeletePassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                >
+                  {showDeletePassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+            </div>
+            {error && <div className={styles.error}>{error}</div>}
+            <div className={styles.modalActions}>
+              <button 
+                type="button" 
+                className={styles.cancelButton}
+                onClick={() => {
+                  setDeleteAccountVisible(false);
+                  setDeletePassword('');
+                  setError('');
+                }}
+                disabled={isDeleting}
+              >
+                İptal
+              </button>
+              <button 
+                type="button" 
+                className={styles.confirmDeleteButton}
+                onClick={confirmDeleteAccount}
+                disabled={!deletePassword || isDeleting}
+              >
+                {isDeleting ? 'Siliniyor...' : 'Hesabı Sil'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

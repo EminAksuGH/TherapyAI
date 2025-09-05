@@ -294,6 +294,47 @@
   }
 }
 
+/* Password Toggle Styles */
+.passwordInputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordInputContainer input {
+  padding-right: 45px;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #666);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: color 0.2s ease;
+  z-index: 1;
+}
+
+.passwordToggle:hover {
+  color: var(--primary-link);
+}
+
+.passwordToggle:focus {
+  outline: none;
+  color: var(--primary-link);
+}
+
+.passwordToggle svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* Large desktop screens */
 @media (min-width: 1200px) {
   .authForm {
