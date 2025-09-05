@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
 
   function resetPassword(email) {
     const actionCodeSettings = {
-      url: 'https://therapyai-production-4230.up.railway.app/change-password',
+      url: 'https://eminaksu.tr/action-handler',
       handleCodeInApp: true
     };
     return sendPasswordResetEmail(auth, email, actionCodeSettings);
@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
 
   function verifyEmail() {
     const actionCodeSettings = {
-      url: 'https://therapyai-production-4230.up.railway.app/verify-email',
+      url: 'https://eminaksu.tr/action-handler',
       handleCodeInApp: true
     };
     return sendEmailVerification(auth.currentUser, actionCodeSettings);
@@ -150,6 +150,15 @@ export function AuthProvider({ children }) {
     const userId = currentUser.uid;
     
     try {
+      // Refresh user token to get latest email verification status
+      await reloadUser();
+      
+      // Force token refresh to get updated email verification claim
+      await currentUser.getIdToken(true);
+      
+      // Wait a bit for the token to be refreshed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // First delete user data from Firestore
       await deleteUserData(userId);
       

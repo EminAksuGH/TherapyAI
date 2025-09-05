@@ -19,9 +19,15 @@ const ForgotPassword = () => {
       setError('');
       setLoading(true);
       await resetPassword(email);
-      setMessage('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. Lütfen gelen kutunuzu kontrol edin.');
+      setMessage('E-posta adresiniz sistemde kayıtlı ise şifre sıfırlama bağlantısı gönderilecektir. Lütfen gelen kutunuzu kontrol edin.');
     } catch (err) {
-      setError('Şifre sıfırlama başarısız oldu. Lütfen e-posta adresinizi kontrol edin.');
+      // Handle network errors specifically, show same message for everything else
+      if (err.code === 'auth/network-request-failed') {
+        setError('Ağ bağlantısı hatası. Lütfen internet bağlantınızı kontrol edin.');
+      } else {
+        // Always show the same message for all other error types
+        setMessage('E-posta adresiniz sistemde kayıtlı ise şifre sıfırlama bağlantısı gönderilecektir. Lütfen gelen kutunuzu kontrol edin.');
+      }
     } finally {
       setLoading(false);
     }

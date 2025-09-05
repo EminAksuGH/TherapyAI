@@ -327,13 +327,47 @@
 
 .passwordToggle:hover {
   color: var(--primary-link);
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
 }
 
 .passwordToggle:focus {
   outline: 2px solid var(--primary-link);
   outline-offset: 1px;
   color: var(--primary-link);
+}
+
+/* Dark theme support */
+:root[data-theme='dark'] .verificationNotice {
+  background-color: var(--theme-error-bg, #3d2e1e);
+  border-color: var(--theme-error-border, #6d4c2f);
+  color: var(--theme-error-text, #e0e0e0);
+}
+
+:root[data-theme='dark'] .verificationNotice p {
+  color: var(--theme-error-text, #e0e0e0);
+}
+
+:root[data-theme='dark'] .resendButton {
+  background-color: var(--primary-link, #a8b2ff);
+  color: var(--card-bg, #2a2a2f);
+}
+
+:root[data-theme='dark'] .resendButton:hover {
+  background-color: var(--primary-link-hover, #bdc5ff);
+}
+
+:root[data-theme='dark'] .passwordToggle {
+  color: var(--text-secondary, rgba(200, 200, 220, 0.7));
+}
+
+:root[data-theme='dark'] .passwordToggle:hover {
+  color: var(--primary-link, #a8b2ff);
+  background-color: var(--hover-bg, #36364a);
+}
+
+:root[data-theme='dark'] .passwordToggle:focus {
+  outline-color: var(--primary-link, #a8b2ff);
+  color: var(--primary-link, #a8b2ff);
 }
 
 .passwordToggle svg {

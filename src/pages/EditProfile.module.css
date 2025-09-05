@@ -301,7 +301,7 @@
 
 .passwordToggle:hover {
   color: var(--primary-link);
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--hover-bg, rgba(0, 0, 0, 0.05));
 }
 
 .passwordToggle:focus {
@@ -313,6 +313,26 @@
 .passwordToggle:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Dark theme support */
+:root[data-theme='dark'] .passwordToggle {
+  color: var(--text-secondary, rgba(200, 200, 220, 0.7));
+}
+
+:root[data-theme='dark'] .passwordToggle:hover {
+  color: var(--primary-link, #a8b2ff);
+  background-color: var(--hover-bg, #36364a);
+}
+
+:root[data-theme='dark'] .passwordToggle:focus {
+  outline-color: var(--primary-link, #a8b2ff);
+  color: var(--primary-link, #a8b2ff);
+}
+
+:root[data-theme='dark'] .passwordToggle:disabled {
+  opacity: 0.4;
+  color: var(--text-secondary, rgba(200, 200, 220, 0.4));
 }
 
 .passwordToggle svg {
