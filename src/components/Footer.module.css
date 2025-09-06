@@ -1,30 +1,79 @@
 .footer {
     background-color: var(--card-bg);
     color: var(--text-color);
-    text-align: center;
-    padding: 16px 20px;
+    padding: 20px;
     font-size: 0.95rem;
     border-top: 1px solid var(--button-bg);
     width: 100%;
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
 }
 
-.footer p {
+.footerContent {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.footerLinks {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.footerLink {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+.footerLink:hover {
+    color: var(--primary-link);
+}
+
+.copyright {
     margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 @media (max-width: 768px) {
     .footer {
-        padding: 12px 16px;
-        font-size: 0.9rem;
+        padding: 16px;
+    }
+    
+    .footerLinks {
+        gap: 16px;
+    }
+    
+    .footerLink {
+        font-size: 0.85rem;
+    }
+    
+    .copyright {
+        font-size: 0.8rem;
     }
 }
 
 @media (max-width: 480px) {
     .footer {
-        padding: 10px;
-        font-size: 0.85rem;
+        padding: 12px;
+    }
+    
+    .footerLinks {
+        gap: 12px;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .footerLink {
+        font-size: 0.8rem;
+    }
+    
+    .copyright {
+        font-size: 0.75rem;
     }
 }

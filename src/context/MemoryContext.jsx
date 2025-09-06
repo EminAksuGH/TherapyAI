@@ -370,6 +370,38 @@ export function MemoryProvider({ children }) {
     }
   };
 
+  // Refresh all memory data from Firebase - can be called after external data changes
+  const refreshMemoryData = async () => {
+    if (!currentUser || !memoryEnabled) {
+      // Clear all memories if user is not logged in or memory is disabled
+      setRecentMemories([]);
+      setImportantMemories([]);
+      setUserTopics([]);
+      setTopicCount(0);
+      return;
+    }
+    
+    try {
+      // Reload all memory data from Firebase
+      const recent = await memoryService.getRecentMemories(currentUser.uid);
+      setRecentMemories(recent);
+      
+      const important = await memoryService.getImportantMemories(currentUser.uid);
+      setImportantMemories(important);
+      
+      const topics = await memoryService.getUserTopics(currentUser.uid);
+      setUserTopics(topics);
+      setTopicCount(topics.length);
+    } catch (error) {
+      console.error("Error refreshing memory data:", error);
+      // If there's an error, clear the arrays to avoid showing stale data
+      setRecentMemories([]);
+      setImportantMemories([]);
+      setUserTopics([]);
+      setTopicCount(0);
+    }
+  };
+
   const value = {
     loading,
     memoryEnabled,
@@ -385,7 +417,8 @@ export function MemoryProvider({ children }) {
     searchMemories,
     getMemoriesByTopic,
     getFormattedMemories,
-    cleanupLowImportanceMemories
+    cleanupLowImportanceMemories,
+    refreshMemoryData
   };
 
   return (

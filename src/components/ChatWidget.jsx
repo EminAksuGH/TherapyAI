@@ -32,7 +32,6 @@ const ChatWidget = () => {
     const [loading, setLoading] = useState(false);
     const [currentConversationId, setCurrentConversationId] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [allUserMemories, setAllUserMemories] = useState([]);
     const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
     const [selectedFeedback, setSelectedFeedback] = useState(null);
     const messagesEndRef = useRef(null);
@@ -45,6 +44,9 @@ const ChatWidget = () => {
         createMemory,
         createMemoryFromConversation,
         getFormattedMemories,
+        recentMemories,
+        importantMemories,
+        refreshMemoryData,
         MAX_TOPICS
     } = useMemory();
 
@@ -68,33 +70,9 @@ const ChatWidget = () => {
         return lang === "und" ? "en" : lang;
     };
 
-    // Load all user memories for AI context
-    const loadAllUserMemories = async () => {
-        if (!currentUser || !memoryEnabled) {
-            setAllUserMemories([]);
-            return;
-        }
-        
-        try {
-            const memoriesRef = collection(db, "users", currentUser.uid, "memories");
-            const q = query(memoriesRef, orderBy("importance", "desc"));
-            const querySnapshot = await getDocs(q);
-            
-            const memories = [];
-            for (const doc of querySnapshot.docs) {
-                const data = doc.data();
-                memories.push({ 
-                    id: doc.id, 
-                    ...data,
-                    content: await decryptMessage(data.content) // Decrypt memory content after fetching
-                });
-            }
-            
-            setAllUserMemories(memories);
-        } catch (error) {
-            console.error("Error loading all memories:", error);
-            setAllUserMemories([]);
-        }
+    // Get all user memories from MemoryContext
+    const getAllUserMemories = () => {
+        return [...recentMemories, ...importantMemories].sort((a, b) => b.importance - a.importance);
     };
 
     const scrollToBottom = () => {
@@ -215,8 +193,7 @@ const ChatWidget = () => {
             if (currentUser) {
                 // User is logged in, fetch from Firestore
                 await loadMostRecentConversation();
-                // Load all memories for AI context
-                await loadAllUserMemories();
+                // Memories are automatically loaded by MemoryContext
             }
             // No else branch for unauthenticated users since they can't use the chat
         };
@@ -224,12 +201,7 @@ const ChatWidget = () => {
         loadChatHistory();
     }, [currentUser]);
 
-    // Reload memories when memory settings change
-    useEffect(() => {
-        if (currentUser) {
-            loadAllUserMemories();
-        }
-    }, [memoryEnabled]);
+    // Memories are automatically refreshed by MemoryContext when memoryEnabled changes
     
     // Load messages when currentConversationId changes
     useEffect(() => {
@@ -351,6 +323,7 @@ const ChatWidget = () => {
             // Retrieve relevant memories for the current conversation
             let userMemoriesText = "Memory feature is disabled.";
             
+            const allUserMemories = getAllUserMemories();
             if (memoryEnabled && allUserMemories.length > 0) {
                 // Use ALL memories as context - much simpler and more effective!
                 userMemoriesText = `User's memories:
@@ -765,9 +738,9 @@ These are the kinds of warm, human responses you should provide when the user op
                             activeConversationId
                         );
                         
-                        // If a new memory was created, refresh our local memories
+                        // If a new memory was created, refresh memory context
                         if (result && result.memoryId) {
-                            await loadAllUserMemories();
+                            await refreshMemoryData();
                         }
 
                         // If this was an explicit save request, send an additional system message to the AI

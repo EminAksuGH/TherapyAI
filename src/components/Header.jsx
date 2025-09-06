@@ -3,11 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useAuth } from '../context/AuthContext';
-import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaInfoCircle, FaHeadset, FaBrain, FaHeart } from 'react-icons/fa';
+import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaInfoCircle, FaHeadset, FaBrain, FaHeart, FaTrash } from 'react-icons/fa';
 
 // Function to check if a path is protected
 const isProtectedPath = (path) => {
-  return ['/support', '/edit-profile', '/memory-list'].includes(path);
+  return ['/support', '/edit-profile', '/memory-list', '/clear-data'].includes(path);
 };
 
 const Header = () => {
@@ -162,13 +162,23 @@ const Header = () => {
                         >
                             <FaEdit className={styles.menuIcon} /> Profili Düzenle
                         </Link>
+                        <Link to="/clear-data" 
+                            onClick={(e) => {
+                                setMenuOpen(false);
+                                handleProtectedNavigation(e, '/clear-data');
+                            }} 
+                            style={{"--item-index": 5}}
+                            className={styles.mobileOnly}
+                        >
+                            <FaTrash className={styles.menuIcon} /> Geçmişi Temizle
+                        </Link>
                         <Link to="/" 
                             onClick={(e) => {
                                 e.preventDefault();
                                 setMenuOpen(false);
                                 handleLogout(e);
                             }} 
-                            style={{"--item-index": 5}}
+                            style={{"--item-index": 6}}
                             className={`${styles.mobileOnly} ${styles.logoutLink}`}
                         >
                             <FaSignOutAlt className={styles.menuIcon} /> Çıkış Yap
@@ -217,6 +227,15 @@ const Header = () => {
                                     }}
                                 >
                                     <FaEdit /> Profili Düzenle
+                                </div>
+                                <div 
+                                    className={styles.dropdownItemDanger}
+                                    onClick={(e) => {
+                                        setDropdownOpen(false);
+                                        handleProtectedNavigation(e, '/clear-data');
+                                    }}
+                                >
+                                    <FaTrash /> Geçmişi Temizle
                                 </div>
                                 <div className={styles.dropdownDivider}></div>
                                 <div 

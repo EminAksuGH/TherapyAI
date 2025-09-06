@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { db } from '../firebase/firebase';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaExclamationTriangle, FaShieldAlt, FaTrash } from 'react-icons/fa';
 import styles from './EditProfile.module.css';
 
 const EditProfile = () => {
@@ -15,6 +15,7 @@ const EditProfile = () => {
     newPassword: '',
     confirmPassword: ''
   });
+  const [originalName, setOriginalName] = useState('');
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState('');
@@ -38,17 +39,21 @@ const EditProfile = () => {
           
           if (userDoc.exists()) {
             const userData = userDoc.data();
+            const userName = userData.name || '';
             setFormData(prev => ({
               ...prev,
-              name: userData.name || '',
+              name: userName,
               email: currentUser.email || ''
             }));
+            setOriginalName(userName);
           } else {
+            const displayName = currentUser.displayName || '';
             setFormData(prev => ({
               ...prev,
-              name: currentUser.displayName || '',
+              name: displayName,
               email: currentUser.email || ''
             }));
+            setOriginalName(displayName);
           }
         }
       } catch (err) {
@@ -69,6 +74,25 @@ const EditProfile = () => {
       [name]: value
     }));
   };
+
+  // Check if save button should be enabled
+  const isSaveEnabled = () => {
+    // Check if name has changed
+    const nameChanged = formData.name !== originalName;
+    
+    // Check if password change is attempted (all three fields must be filled)
+    const isPasswordChangeAttempted = formData.currentPassword && formData.newPassword && formData.confirmPassword;
+    
+    // Enable if name changed OR all password fields are filled for password change
+    return nameChanged || isPasswordChangeAttempted;
+  };
+
+  // Get password validation message for real-time feedback
+  const getPasswordValidationMessage = () => {
+    if (!formData.newPassword) return null;
+    return validatePassword(formData.newPassword);
+  };
+
 
   const updateUserProfile = async () => {
     try {
@@ -98,8 +122,26 @@ const EditProfile = () => {
     }
   };
 
+  // Validate password requirements
+  const validatePassword = (password) => {
+    if (password.length < 6) {
+      return 'Şifreniz en az 6 karakterden oluşmalı.';
+    }
+    if (password.length > 128) {
+      return 'Şifreniz en fazla 128 karakter olabilir.';
+    }
+    return null; // No error
+  };
+
   const updateUserPassword = async () => {
     if (!formData.currentPassword || !formData.newPassword) return true; // Skip if no password provided
+    
+    // Validate new password
+    const passwordError = validatePassword(formData.newPassword);
+    if (passwordError) {
+      setError(passwordError);
+      return false;
+    }
     
     if (formData.newPassword !== formData.confirmPassword) {
       setError('Yeni şifreler eşleşmiyor.');
@@ -123,8 +165,12 @@ const EditProfile = () => {
       console.error("Error updating password:", err);
       if (err.code === 'auth/wrong-password') {
         setError('Mevcut şifre yanlış.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Şifre çok zayıf. Daha güçlü bir şifre seçin.');
+      } else if (err.code === 'auth/requires-recent-login') {
+        setError('Güvenlik nedeniyle lütfen çıkış yapıp tekrar giriş yapın, sonra şifrenizi değiştirin.');
       } else {
-        setError('Şifre güncellenirken bir hata oluştu.');
+        setError('Şifre güncellenirken bir hata oluştu. Mevcut şifrenizi doğru girdiğinizden emin olun.');
       }
       return false;
     }
@@ -135,6 +181,7 @@ const EditProfile = () => {
     setUpdating(true);
     setError('');
     setSuccess('');
+    
 
     try {
       if (!currentUser) throw new Error('Kullanıcı oturumu bulunamadı');
@@ -166,6 +213,9 @@ const EditProfile = () => {
       if (profileUpdated && passwordChanged) {
         setSuccess('Profiliniz başarıyla güncellendi.');
         
+        // Update original name to current name
+        setOriginalName(formData.name);
+        
         // Clear password fields
         setFormData(prev => ({
           ...prev,
@@ -173,10 +223,12 @@ const EditProfile = () => {
           newPassword: '',
           confirmPassword: ''
         }));
+        
       }
     } catch (err) {
       console.error("Profile update error:", err);
       setError(`Profil güncellenirken bir hata oluştu: ${err.message || 'Bilinmeyen hata'}`);
+      
     } finally {
       setUpdating(false);
     }
@@ -237,9 +289,6 @@ const EditProfile = () => {
     <div className={styles.editProfileContainer}>
       <div className={styles.editProfileCard}>
         <h2>Profili Düzenle</h2>
-        
-        {error && <div className={styles.error}>{error}</div>}
-        {success && <div className={styles.success}>{success}</div>}
         
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* Basic Info Section */}
@@ -318,6 +367,11 @@ const EditProfile = () => {
                   {showNewPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
+              {getPasswordValidationMessage() && (
+                <small className={styles.passwordValidationError}>
+                  {getPasswordValidationMessage()}
+                </small>
+              )}
             </div>
             
             <div className={styles.formGroup}>
@@ -344,6 +398,10 @@ const EditProfile = () => {
             <small className={styles.passwordNote}>Şifrenizi değiştirmek istemiyorsanız bu alanları boş bırakın.</small>
           </div>
           
+          {/* Error and Success Messages */}
+          {error && <div className={styles.error}>{error}</div>}
+          {success && <div className={styles.success}>{success}</div>}
+          
           <div className={styles.formActions}>
             <button 
               type="button" 
@@ -355,7 +413,7 @@ const EditProfile = () => {
             <button 
               type="submit" 
               className={styles.saveButton}
-              disabled={updating}
+              disabled={updating || !isSaveEnabled()}
             >
               {updating ? 'Kaydediliyor...' : 'Kaydet'}
             </button>
@@ -364,15 +422,42 @@ const EditProfile = () => {
 
         {/* Delete Account Section */}
         <div className={styles.dangerZone}>
-          <h3>Tehlike Bölgesi</h3>
-          <p>Bu işlem geri alınamaz. Hesabınızı ve tüm verilerinizi kalıcı olarak siler.</p>
-          <button 
-            type="button" 
-            className={styles.deleteButton}
-            onClick={handleDeleteAccount}
-          >
-            Hesabı Sil
-          </button>
+          <div className={styles.dangerHeader}>
+            <div className={styles.dangerIcon}>
+              <FaExclamationTriangle />
+            </div>
+            <div className={styles.dangerTitle}>
+              <h3>Hesap Silme</h3>
+              <p>Bu işlem geri alınamaz ve kalıcıdır</p>
+            </div>
+          </div>
+          
+          <div className={styles.deleteAccountCard}>
+            <div className={styles.deleteInfo}>
+              <h4>Hesabınızı sildiğinizde:</h4>
+              <ul className={styles.deleteList}>
+                <li>Tüm konuşma geçmişiniz silinir</li>
+                <li>Kaydedilen hatıralarınız silinir</li>
+                <li>Profil bilgileriniz silinir</li>
+                <li>Bu hesaba bir daha erişemezsiniz</li>
+              </ul>
+            </div>
+            
+            <div className={styles.deleteActions}>
+              <div className={styles.deleteWarning}>
+                <FaShieldAlt className={styles.warningIcon} />
+                <span>Bu işlem geri alınamaz!</span>
+              </div>
+              <button 
+                type="button" 
+                className={styles.deleteButton}
+                onClick={handleDeleteAccount}
+              >
+                <FaTrash />
+                Hesabı Kalıcı Olarak Sil
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -380,31 +465,54 @@ const EditProfile = () => {
       {deleteAccountVisible && (
         <div className={styles.modal}>
           <div className={styles.modalContent}>
-            <h3>Hesabı Sil</h3>
-            <p>Bu işlem geri alınamaz! Tüm verileriniz kalıcı olarak silinecektir.</p>
-            <div className={styles.formGroup}>
-              <label htmlFor="deletePassword">Şifrenizi girin:</label>
-              <div className={styles.passwordInputContainer}>
-                <input
-                  type={showDeletePassword ? "text" : "password"}
-                  id="deletePassword"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder="Mevcut şifreniz"
-                  disabled={isDeleting}
-                />
-                <button
-                  type="button"
-                  className={styles.passwordToggle}
-                  onClick={() => setShowDeletePassword(!showDeletePassword)}
-                  disabled={isDeleting}
-                  aria-label={showDeletePassword ? "Şifreyi gizle" : "Şifreyi göster"}
-                >
-                  {showDeletePassword ? <FaEyeSlash /> : <FaEye />}
-                </button>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalIcon}>
+                <FaExclamationTriangle />
               </div>
+              <h3>Hesabı Kalıcı Olarak Sil</h3>
             </div>
-            {error && <div className={styles.error}>{error}</div>}
+            
+            <div className={styles.modalBody}>
+              <p className={styles.modalWarning}>
+                Bu işlem <strong>geri alınamaz</strong>! Hesabınız ve tüm verileriniz kalıcı olarak silinecektir.
+              </p>
+              
+              <div className={styles.deletionDetails}>
+                <h4>Silinecek veriler:</h4>
+                <ul>
+                  <li>Tüm konuşma geçmişi</li>
+                  <li>Kaydedilen hatıralar</li>
+                  <li>Profil bilgileri</li>
+                  <li>Hesap ayarları</li>
+                </ul>
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label htmlFor="deletePassword">Devam etmek için şifrenizi girin:</label>
+                <div className={styles.passwordInputContainer}>
+                  <input
+                    type={showDeletePassword ? "text" : "password"}
+                    id="deletePassword"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Mevcut şifreniz"
+                    disabled={isDeleting}
+                  />
+                  <button
+                    type="button"
+                    className={styles.passwordToggle}
+                    onClick={() => setShowDeletePassword(!showDeletePassword)}
+                    disabled={isDeleting}
+                    aria-label={showDeletePassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                  >
+                    {showDeletePassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+              
+              {error && <div className={styles.error}>{error}</div>}
+            </div>
+            
             <div className={styles.modalActions}>
               <button 
                 type="button" 
@@ -416,7 +524,7 @@ const EditProfile = () => {
                 }}
                 disabled={isDeleting}
               >
-                İptal
+                İptal Et
               </button>
               <button 
                 type="button" 
@@ -424,6 +532,7 @@ const EditProfile = () => {
                 onClick={confirmDeleteAccount}
                 disabled={!deletePassword || isDeleting}
               >
+                <FaTrash />
                 {isDeleting ? 'Siliniyor...' : 'Hesabı Sil'}
               </button>
             </div>

@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
+import Privacy from './pages/Privacy';
 import Support from './pages/Support';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -12,6 +13,7 @@ import ChangePassword from './pages/ChangePassword';
 import VerifyEmail from './pages/VerifyEmail';
 import EditProfile from './pages/EditProfile';
 import MemoryList from './pages/MemoryList';
+import ClearData from './pages/ClearData';
 import ProtectedRoute from './components/ProtectedRoute';
 import FirebaseActionHandler from './pages/FirebaseActionHandler';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -30,7 +32,8 @@ const NavigationController = ({ children }) => {
     if (!currentUser && (
         location.pathname.startsWith('/edit-profile') || 
         location.pathname.startsWith('/support') || 
-        location.pathname.startsWith('/memory-list')
+        location.pathname.startsWith('/memory-list') ||
+        location.pathname.startsWith('/clear-data')
     )) {
       navigate('/', { replace: true });
     }
@@ -55,7 +58,7 @@ const App = () => {
                                 <Route path="/forgot-password" element={<ForgotPassword />} />
                                 <Route path="/change-password" element={<ChangePassword />} />
                                 <Route path="/verify-email" element={<VerifyEmail />} />
-                                <Route path="/about" element={<About />} />
+                                <Route path="/about" element={<About />} />                                <Route path="/privacy" element={<Privacy />} />
                                 <Route path="/logout" element={<Navigate to="/" replace />} />
                                 <Route path="/action-handler" element={<FirebaseActionHandler />} />
                                 
@@ -64,6 +67,7 @@ const App = () => {
                                     <Route path="/edit-profile" element={<EditProfile />} />
                                     <Route path="/support" element={<Support />} />
                                     <Route path="/memory-list" element={<MemoryList />} />
+                                    <Route path="/clear-data" element={<ClearData />} />
                                 </Route>
                             </Routes>
                         </main>

@@ -11,6 +11,8 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
 }
 
 .sidebar::-webkit-scrollbar {
@@ -177,6 +179,10 @@
         height: auto;
         border-right: none;
         border-bottom: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
     }
     .closeButton {
         display: block;

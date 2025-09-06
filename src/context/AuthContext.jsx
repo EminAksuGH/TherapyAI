@@ -72,6 +72,122 @@ export function AuthProvider({ children }) {
     return Promise.resolve();
   }
 
+  async function clearUserData(userId) {
+    try {
+      // Clear user's conversations and memories without deleting the user account
+      const conversationsQuery = query(
+        collection(db, 'conversations'),
+        where('userId', '==', userId)
+      );
+      const conversationsSnapshot = await getDocs(conversationsQuery);
+      
+      let pendingDeletes = 0;
+      let batch = writeBatch(db);
+      const deletedPaths = new Set();
+
+      const commitIfNeeded = async (force = false) => {
+        if (force || pendingDeletes >= 400) {
+          await batch.commit();
+          batch = writeBatch(db);
+          pendingDeletes = 0;
+        }
+      };
+      
+      // Delete conversations and their messages
+      for (const conversationDoc of conversationsSnapshot.docs) {
+        const conversationId = conversationDoc.id;
+        
+        // Delete messages in this conversation
+        const messagesQuery = query(
+          collection(db, 'conversations', conversationId, 'messages')
+        );
+        const messagesSnapshot = await getDocs(messagesQuery);
+        
+        messagesSnapshot.docs.forEach((messageDoc) => {
+          const p = messageDoc.ref.path;
+          if (!deletedPaths.has(p)) {
+            batch.delete(messageDoc.ref);
+            deletedPaths.add(p);
+            pendingDeletes += 1;
+          }
+        });
+        await commitIfNeeded();
+        
+        // Delete the conversation document
+        const convPath = `conversations/${conversationId}`;
+        if (!deletedPaths.has(convPath)) {
+          batch.delete(conversationDoc.ref);
+          deletedPaths.add(convPath);
+          pendingDeletes += 1;
+        }
+        await commitIfNeeded();
+      }
+      
+      // Delete user's memories (top-level collection)
+      const memoriesQuery = query(
+        collection(db, 'memories'),
+        where('userId', '==', userId)
+      );
+      const memoriesSnapshot = await getDocs(memoriesQuery);
+      
+      memoriesSnapshot.docs.forEach((memoryDoc) => {
+        const p = memoryDoc.ref.path;
+        if (!deletedPaths.has(p)) {
+          batch.delete(memoryDoc.ref);
+          deletedPaths.add(p);
+          pendingDeletes += 1;
+        }
+      });
+      await commitIfNeeded();
+
+      // Delete user's memories (nested under users/{uid}/memories) – if used
+      try {
+        const userMemoriesQuery = collection(db, 'users', userId, 'memories');
+        const userMemoriesSnapshot = await getDocs(userMemoriesQuery);
+        userMemoriesSnapshot.docs.forEach((memoryDoc) => {
+          const p = memoryDoc.ref.path;
+          if (!deletedPaths.has(p)) {
+            batch.delete(memoryDoc.ref);
+            deletedPaths.add(p);
+            pendingDeletes += 1;
+          }
+        });
+        await commitIfNeeded();
+      } catch {}
+
+      // Additionally, catch any stray 'memories' docs anywhere that belong to the user (via collection group)
+      try {
+        const { collectionGroup } = await import('firebase/firestore');
+        const cgQuery = query(collectionGroup(db, 'memories'), where('userId', '==', userId));
+        const cgSnapshot = await getDocs(cgQuery);
+        cgSnapshot.docs.forEach((memoryDoc) => {
+          const p = memoryDoc.ref.path;
+          if (!deletedPaths.has(p)) {
+            batch.delete(memoryDoc.ref);
+            deletedPaths.add(p);
+            pendingDeletes += 1;
+          }
+        });
+        await commitIfNeeded();
+      } catch {}
+      
+      // Execute any remaining deletions
+      await commitIfNeeded(true);
+      
+    } catch (error) {
+      console.error('Error clearing user data:', error);
+      
+      // Provide more specific error handling
+      if (error.code === 'permission-denied') {
+        throw new Error('Firestore güvenlik kuralları veri temizleme işlemine izin vermiyor. Lütfen geliştirici ile iletişime geçin.');
+      } else if (error.code === 'unauthenticated') {
+        throw new Error('Kimlik doğrulama gerekli. Lütfen tekrar giriş yapın.');
+      } else {
+        throw new Error('Veriler temizlenirken bir hata oluştu: ' + error.message);
+      }
+    }
+  }
+
   async function deleteUserData(userId) {
     try {
       // Delete user's conversations
@@ -214,7 +330,8 @@ export function AuthProvider({ children }) {
     verifyEmail,
     reloadUser,
     deleteAccount,
-    forceLogout
+    forceLogout,
+    clearUserData
   };
 
   return (
