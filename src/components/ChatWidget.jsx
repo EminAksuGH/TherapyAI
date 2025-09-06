@@ -695,7 +695,7 @@ These are the kinds of warm, human responses you should provide when the user op
                         { role: "user", content: message }
                     ],
                     temperature: 0.9,
-                    max_tokens: 1500
+                    max_tokens: 2000
                 },
                 {
                     headers: {
@@ -755,6 +755,19 @@ These are the kinds of warm, human responses you should provide when the user op
                                     sender: "system",
                                     text: `MEMORY SAVED SUCCESSFULLY: The user's request to save information was processed. The memory with content "${result.analysis.extractedMemory}" was saved with importance ${result.analysis.importance}/10.`
                                 });
+                            } else if (result && result.isDuplicate) {
+                                // Duplicate was detected for an EXPLICIT save request
+                                // Only show message when user explicitly asked to save something
+                                const duplicateMessage = { 
+                                    sender: "ai", 
+                                    text: `Bu bilgiyi zaten hafızamda tutuyorum. Benzer bir kayıt mevcut, bu yüzden tekrar kaydetmiyorum.` 
+                                };
+                                
+                                // Add duplicate message to chat
+                                setChatLog(prevLog => [...prevLog, duplicateMessage]);
+                                
+                                // Save the duplicate message to Firestore
+                                await saveMessageToFirestore(duplicateMessage, activeConversationId);
                             } else if (result && result.limitReached) {
                                 // Memory limit was reached
                                 // Send a message to the user about reaching memory limits
@@ -774,6 +787,12 @@ These are the kinds of warm, human responses you should provide when the user op
                                     sender: "system",
                                     text: `MEMORY SAVE FAILED: The user's request to save information could not be processed. The information may not have been important enough or there may have been a technical issue.`
                                 });
+                            }
+                        } else {
+                            // For automatic memory creation (not explicit user request)
+                            // Just log duplicates silently - don't interrupt the conversation
+                            if (result && result.isDuplicate) {
+                                console.log(`Duplicate memory detected and prevented: ${result.analysis.reasoning}`);
                             }
                         }
                     } catch (memoryError) {

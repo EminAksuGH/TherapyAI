@@ -442,6 +442,104 @@ IMPORTANT INSTRUCTIONS FOR MEMORY USE:
 };
 
 /**
+ * Check if a new memory is similar to existing memories
+ * @param {string} newMemoryContent - The new memory content to check
+ * @param {Array} existingMemories - Existing user memories to compare against
+ * @returns {Promise<object>} - Similarity analysis result
+ */
+const checkMemorySimilarity = async (newMemoryContent, existingMemories) => {
+    if (!existingMemories || existingMemories.length === 0) {
+        return { isDuplicate: false, similarMemory: null, similarity: 0 };
+    }
+    
+    try {
+        const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+        
+        const response = await axios.post(
+            "https://api.openai.com/v1/chat/completions",
+            {
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are analyzing whether a new memory is a duplicate or too similar to existing memories. 
+
+Instructions:
+1. Compare the new memory content with each existing memory
+2. Determine if the new memory contains substantially the same information as any existing memory
+3. Rate similarity on a scale of 0-100 (0 = completely different, 100 = exact duplicate)
+4. Consider memories as duplicates if similarity is 70+ or if they contain the same key information
+5. Look for semantic similarity, not just exact text matches
+
+Return JSON only with this structure:
+{
+  "isDuplicate": boolean,
+  "highestSimilarity": number,
+  "similarMemoryId": string or null,
+  "similarMemoryContent": string or null,
+  "reasoning": string
+}`
+                    },
+                    {
+                        role: "user",
+                        content: `New memory to check:
+"${newMemoryContent}"
+
+Existing memories:
+${existingMemories.map((memory, index) => 
+    `${index + 1}. [ID: ${memory.id}] [Topic: ${memory.topic}]: ${memory.content}`
+).join('\n')}
+
+Check if the new memory is a duplicate or too similar to any existing memory. Return valid JSON only.`
+                    }
+                ],
+                temperature: 0.3,
+                max_tokens: 400
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${API_KEY}`
+                }
+            }
+        );
+
+        if (!response.data || !response.data.choices || response.data.choices.length === 0) {
+            throw new Error("Invalid API response");
+        }
+
+        const aiResponse = response.data.choices[0].message.content;
+        
+        let jsonData;
+        try {
+            jsonData = JSON.parse(aiResponse);
+        } catch (e) {
+            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                jsonData = JSON.parse(jsonMatch[0]);
+            } else {
+                return { isDuplicate: false, similarMemory: null, similarity: 0 };
+            }
+        }
+
+        return {
+            isDuplicate: jsonData.isDuplicate || false,
+            similarity: jsonData.highestSimilarity || 0,
+            similarMemory: jsonData.similarMemoryId ? {
+                id: jsonData.similarMemoryId,
+                content: jsonData.similarMemoryContent
+            } : null,
+            reasoning: jsonData.reasoning || "No detailed analysis available"
+        };
+        
+    } catch (error) {
+        console.error("Error checking memory similarity:", error);
+        // On error, allow the memory to be saved (better to have duplicates than lose important info)
+        return { isDuplicate: false, similarMemory: null, similarity: 0 };
+    }
+};
+
+/**
  * Use AI to analyze conversation content and determine memory importance
  * @param {string} conversationText - The text to analyze
  * @param {string} previousContext - Previous context or messages for reference
@@ -463,9 +561,26 @@ export const analyzeMemoryImportance = async (conversationText, previousContext 
                 .replace(/(?:(?:can you |please |lütfen |)?(?:remember|save|store|keep|hatırla|kaydet|sakla|tut) this|bunu (?:hatırla|kaydet|sakla|tut|aklında tut))(?:\s*:\s*|\s+)/i, '')
                 .trim();
             
+            const contentToCheck = extractedContent || conversationText;
+            
+            // Check for duplicates even for explicit requests
+            const similarityCheck = await checkMemorySimilarity(contentToCheck, existingMemories);
+            
+            if (similarityCheck.isDuplicate) {
+                return {
+                    importance: 2,
+                    extractedMemory: contentToCheck,
+                    topics: ["Kullanıcı Talebi"],
+                    reasoning: `Bu bilgi zaten mevcut bir hafızaya çok benziyor: ${similarityCheck.reasoning}`,
+                    shouldStore: false,
+                    isDuplicate: true,
+                    similarMemory: similarityCheck.similarMemory
+                };
+            }
+            
             return {
                 importance: 6, // Set medium-high importance by default for explicit requests
-                extractedMemory: extractedContent || conversationText,
+                extractedMemory: contentToCheck,
                 topics: ["Kullanıcı Talebi"], // "User Request" in Turkish
                 reasoning: "Kullanıcı bu bilgiyi kaydetmek için özel olarak talepte bulundu",
                 shouldStore: true // Always store user-requested memories
@@ -511,6 +626,7 @@ Instructions:
 2. Assign an importance score (1-10) based on how critical this information would be for future interactions
 3. Create a concise memory statement summarizing the important information IN TURKISH (since this is a Turkish therapy app)
 4. Determine appropriate topics/tags for categorizing this memory IN TURKISH
+5. CRITICAL: Check if this information is already captured in existing memories to avoid duplicates
 
 For importance scoring - USE THE FULL RANGE (1-10) based on actual content, but be conservative:
 - 1-3: Very casual remarks, routine information, simple questions or basic preferences
@@ -551,6 +667,12 @@ Do not extract or remember:
 - Questions that are just checking if AI remembers something
 - Factual queries unrelated to emotional support (score appropriately if they must be remembered)
 
+DUPLICATE PREVENTION:
+- Carefully compare the new information with existing memories
+- If similar information already exists, set shouldStore to false
+- Only store if the information adds significant new details or updates existing information
+- Consider variations in wording but same core meaning as duplicates
+
 About memory-related queries:
 - If a query like "Do you remember X?" contains important personal information (like names, relationships, events), DO extract the actual information about X
 - Rate the importance based on the content being asked about, not the fact that it's a memory query
@@ -571,7 +693,7 @@ Output JSON only with the following structure:
   "extractedMemory": string, // Concise memory statement IN TURKISH
   "topics": string[], // 1-3 relevant topic tags IN TURKISH
   "reasoning": string, // Brief explanation of why this information matters and justification for the importance score IN TURKISH
-  "shouldStore": boolean // Whether this is worth storing as a new memory, default to false for importance < 6
+  "shouldStore": boolean // Whether this is worth storing as a new memory, default to false for importance < 6 or if duplicate
 }`
                     },
                     {
@@ -585,7 +707,7 @@ ${conversationText}
 Existing user memories:
 ${existingMemories.map(m => `[${m.topic}]: ${m.content}`).join('\n')}
 
-Analyze this message and determine what should be remembered. Consider if this information is already captured in existing memories. Return valid JSON only.`
+Analyze this message and determine what should be remembered. CRITICALLY check if this information is already captured in existing memories to avoid duplicates. Return valid JSON only.`
                     }
                 ],
                 temperature: 0.3,
@@ -649,6 +771,19 @@ Analyze this message and determine what should be remembered. Consider if this i
             }
         }
         
+        // If shouldStore is true, do a final similarity check to prevent duplicates
+        if (jsonData.shouldStore && jsonData.extractedMemory && existingMemories.length > 0) {
+            const similarityCheck = await checkMemorySimilarity(jsonData.extractedMemory, existingMemories);
+            
+            if (similarityCheck.isDuplicate) {
+                console.log(`Duplicate detected: ${similarityCheck.reasoning}`);
+                jsonData.shouldStore = false;
+                jsonData.isDuplicate = true;
+                jsonData.similarMemory = similarityCheck.similarMemory;
+                jsonData.reasoning += ` (Duplicate kayıt algılandı: ${similarityCheck.reasoning})`;
+            }
+        }
+        
         return jsonData;
     } catch (error) {
         console.error("Error analyzing memory importance:", error);
@@ -707,6 +842,89 @@ export const deleteLowImportanceMemories = async (userId, importanceThreshold = 
         return deleteCount;
     } catch (error) {
         console.error("Error deleting low importance memories:", error);
+        throw error;
+    }
+};
+
+/**
+ * Find and remove duplicate memories for a user
+ * @param {string} userId - The user ID
+ * @returns {Promise<object>} - Summary of duplicate cleanup
+ */
+export const findAndRemoveDuplicateMemories = async (userId) => {
+    try {
+        // Get all memories for the user
+        const memoriesRef = collection(db, "users", userId, "memories");
+        const querySnapshot = await getDocs(memoriesRef);
+        
+        const memories = [];
+        for (const doc of querySnapshot.docs) {
+            const data = doc.data();
+            memories.push({
+                id: doc.id,
+                ...data,
+                content: await decryptMemoryContent(data.content)
+            });
+        }
+        
+        let duplicatesFound = 0;
+        let duplicatesRemoved = 0;
+        const duplicatePairs = [];
+        
+        // Compare each memory with every other memory
+        for (let i = 0; i < memories.length; i++) {
+            for (let j = i + 1; j < memories.length; j++) {
+                const memory1 = memories[i];
+                const memory2 = memories[j];
+                
+                // Skip if either memory was already marked for deletion
+                if (!memory1 || !memory2) continue;
+                
+                try {
+                    const similarityCheck = await checkMemorySimilarity(
+                        memory1.content, 
+                        [memory2]
+                    );
+                    
+                    if (similarityCheck.isDuplicate) {
+                        duplicatesFound++;
+                        duplicatePairs.push({
+                            memory1: { id: memory1.id, content: memory1.content, importance: memory1.importance },
+                            memory2: { id: memory2.id, content: memory2.content, importance: memory2.importance },
+                            similarity: similarityCheck.similarity
+                        });
+                        
+                        // Keep the memory with higher importance or more recent if same importance
+                        const memoryToKeep = memory1.importance > memory2.importance ? memory1 : 
+                                           memory2.importance > memory1.importance ? memory2 :
+                                           (memory1.createdAt?.seconds || 0) > (memory2.createdAt?.seconds || 0) ? memory1 : memory2;
+                        
+                        const memoryToDelete = memoryToKeep === memory1 ? memory2 : memory1;
+                        
+                        // Delete the duplicate memory
+                        await deleteMemory(userId, memoryToDelete.id);
+                        duplicatesRemoved++;
+                        
+                        // Remove from array to prevent further comparisons
+                        const indexToRemove = memoryToDelete === memory1 ? i : j;
+                        memories[indexToRemove] = null;
+                    }
+                } catch (error) {
+                    console.error("Error checking similarity between memories:", error);
+                    // Continue with other comparisons
+                }
+            }
+        }
+        
+        return {
+            totalMemoriesChecked: memories.filter(m => m !== null).length,
+            duplicatesFound,
+            duplicatesRemoved,
+            duplicatePairs: duplicatePairs.slice(0, 10) // Return first 10 for logging
+        };
+        
+    } catch (error) {
+        console.error("Error finding and removing duplicate memories:", error);
         throw error;
     }
 };

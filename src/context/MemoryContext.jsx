@@ -174,6 +174,17 @@ export function MemoryProvider({ children }) {
       
       // If the user explicitly requested to save this information
       if (isExplicitSaveRequest) {
+        // Check if it was detected as a duplicate
+        if (analysis.isDuplicate) {
+          return {
+            memoryId: null,
+            analysis,
+            isDuplicate: true,
+            similarMemory: analysis.similarMemory,
+            message: "Bu bilgi zaten hafızamda mevcut. Benzer bir kayıt bulundu."
+          };
+        }
+        
         // Check topic limits - a critical constraint even for explicit requests
         const primaryTopic = analysis.topics[0] || "User Requested Memory";
         
@@ -198,6 +209,12 @@ export function MemoryProvider({ children }) {
       } else {
         // For normal messages, use consistent 6/10 importance threshold
         const MINIMUM_IMPORTANCE = 6;
+        
+        // Check if it was detected as a duplicate
+        if (analysis.isDuplicate) {
+          console.log(`Skipping duplicate memory: ${analysis.reasoning}`);
+          return null;
+        }
         
         // Only create memory if it's important enough and AI determines it's worth storing
         if (!analysis.shouldStore || analysis.importance < MINIMUM_IMPORTANCE) {
@@ -402,6 +419,23 @@ export function MemoryProvider({ children }) {
     }
   };
 
+  // Find and remove duplicate memories
+  const findAndRemoveDuplicateMemories = async () => {
+    if (!currentUser) return null;
+    
+    try {
+      const result = await memoryService.findAndRemoveDuplicateMemories(currentUser.uid);
+      
+      // Refresh memory data after cleanup
+      await refreshMemoryData();
+      
+      return result;
+    } catch (error) {
+      console.error("Error finding and removing duplicate memories:", error);
+      return null;
+    }
+  };
+
   const value = {
     loading,
     memoryEnabled,
@@ -418,7 +452,8 @@ export function MemoryProvider({ children }) {
     getMemoriesByTopic,
     getFormattedMemories,
     cleanupLowImportanceMemories,
-    refreshMemoryData
+    refreshMemoryData,
+    findAndRemoveDuplicateMemories
   };
 
   return (
