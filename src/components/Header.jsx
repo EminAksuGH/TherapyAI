@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useAuth } from '../context/AuthContext';
-import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaInfoCircle, FaHeadset, FaBrain, FaHeart, FaTrash } from 'react-icons/fa';
+import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaHeadset, FaBrain, FaHeart, FaTrash } from 'react-icons/fa';
 
 // Function to check if a path is protected
 const isProtectedPath = (path) => {
@@ -122,19 +122,13 @@ const Header = () => {
                 >
                     <FaHome className={styles.menuIcon} /> Ana Sayfa
                 </Link>
-                <Link to="/about" 
-                    onClick={() => setMenuOpen(false)} 
-                    style={{"--item-index": 1}}
-                >
-                    <FaInfoCircle className={styles.menuIcon} /> Hakkında
-                </Link>
                 <Link 
                     to="/support" 
                     onClick={(e) => {
                         setMenuOpen(false);
                         handleProtectedNavigation(e, '/support');
                     }}
-                    style={{"--item-index": 2}}
+                    style={{"--item-index": 1}}
                 >
                     <FaHeart className={styles.menuIcon} /> Duygusal Destek
                 </Link>
@@ -147,7 +141,7 @@ const Header = () => {
                                 setMenuOpen(false);
                                 handleProtectedNavigation(e, '/memory-list');
                             }} 
-                            style={{"--item-index": 3}}
+                            style={{"--item-index": 2}}
                             className={styles.mobileOnly}
                         >
                             <FaBrain className={styles.menuIcon} /> Hafıza Listesi
@@ -157,7 +151,7 @@ const Header = () => {
                                 setMenuOpen(false);
                                 handleProtectedNavigation(e, '/edit-profile');
                             }} 
-                            style={{"--item-index": 4}}
+                            style={{"--item-index": 3}}
                             className={styles.mobileOnly}
                         >
                             <FaEdit className={styles.menuIcon} /> Profili Düzenle
@@ -167,7 +161,7 @@ const Header = () => {
                                 setMenuOpen(false);
                                 handleProtectedNavigation(e, '/clear-data');
                             }} 
-                            style={{"--item-index": 5}}
+                            style={{"--item-index": 4}}
                             className={styles.mobileOnly}
                         >
                             <FaTrash className={styles.menuIcon} /> Geçmişi Temizle
@@ -178,7 +172,7 @@ const Header = () => {
                                 setMenuOpen(false);
                                 handleLogout(e);
                             }} 
-                            style={{"--item-index": 6}}
+                            style={{"--item-index": 5}}
                             className={`${styles.mobileOnly} ${styles.logoutLink}`}
                         >
                             <FaSignOutAlt className={styles.menuIcon} /> Çıkış Yap
@@ -187,7 +181,7 @@ const Header = () => {
                 ) : (
                     <Link to="/login" 
                         onClick={() => setMenuOpen(false)} 
-                        style={{"--item-index": 3}}
+                        style={{"--item-index": 2}}
                         className={styles.mobileOnly}
                     >
                         <FaUser className={styles.menuIcon} /> Giriş Yap
