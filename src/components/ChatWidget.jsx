@@ -36,6 +36,7 @@ const ChatWidget = () => {
     const [selectedFeedback, setSelectedFeedback] = useState(null);
     const messagesEndRef = useRef(null);
     const chatLogRef = useRef(null);
+    const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
     const { currentUser } = useAuth();
     const { 
         memoryEnabled, 
@@ -354,7 +355,7 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
             const isExplicitSaveRequest = /(?:(?:remember|save|store|keep|hatırla|kaydet|sakla|tut) this|bunu (?:hatırla|kaydet|sakla|tut|aklında tut)|(?:bana|sana).+(?:hitap|böyle|şekilde).+istiyorum|(?:adım|ismim).+(?:bana|sana).+(?:hitap|çağır|de)|bundan böyle.+istiyorum)/i.test(message.trim());
 
             const response = await axios.post(
-                "https://eminaksu.tr/support",
+                "https://api.openai.com/v1/chat/completions",
                 {
                     model: "gpt-4o",
                     messages: [
@@ -699,6 +700,7 @@ These are the kinds of warm, human responses you should provide when the user op
                 {
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${API_KEY}`
                     }
                 }
             );
