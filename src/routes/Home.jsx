@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styles from './Home.module.css';
 import { motion } from 'framer-motion';
 import { FaHeartbeat, FaBrain, FaUserFriends } from 'react-icons/fa';
@@ -37,7 +38,7 @@ const Home = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 >
-                    <a href="/support">Seansınızı Başlatın</a>
+                    <Link to="/chat">Seansınızı Başlatın</Link>
                 </motion.div>
             </div>
             

@@ -7,7 +7,7 @@ import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaHeadset, FaBrain
 
 // Function to check if a path is protected
 const isProtectedPath = (path) => {
-  return ['/support', '/edit-profile', '/memory-list', '/clear-data'].includes(path);
+  return ['/chat', '/edit-profile', '/memory-list', '/clear-data'].includes(path);
 };
 
 const Header = () => {
@@ -123,10 +123,10 @@ const Header = () => {
                     <FaHome className={styles.menuIcon} /> Ana Sayfa
                 </Link>
                 <Link 
-                    to="/support" 
+                    to="/chat" 
                     onClick={(e) => {
                         setMenuOpen(false);
-                        handleProtectedNavigation(e, '/support');
+                        handleProtectedNavigation(e, '/chat');
                     }}
                     style={{"--item-index": 1}}
                 >

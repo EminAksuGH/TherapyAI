@@ -2,19 +2,19 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import Home from './pages/Home';
-import Privacy from './pages/Privacy';
-import Support from './pages/Support';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import ForgotPassword from './pages/ForgotPassword';
-import ChangePassword from './pages/ChangePassword';
-import VerifyEmail from './pages/VerifyEmail';
-import EditProfile from './pages/EditProfile';
-import MemoryList from './pages/MemoryList';
-import ClearData from './pages/ClearData';
+import Home from './routes/Home';
+import Privacy from './routes/Privacy';
+import Chat from './routes/Chat';
+import Login from './routes/Login';
+import Signup from './routes/Signup';
+import ForgotPassword from './routes/ForgotPassword';
+import ChangePassword from './routes/ChangePassword';
+import VerifyEmail from './routes/VerifyEmail';
+import EditProfile from './routes/EditProfile';
+import MemoryList from './routes/MemoryList';
+import ClearData from './routes/ClearData';
 import ProtectedRoute from './components/ProtectedRoute';
-import FirebaseActionHandler from './pages/FirebaseActionHandler';
+import FirebaseActionHandler from './routes/FirebaseActionHandler';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MemoryProvider } from './context/MemoryContext';
 import styles from './App.module.css';
@@ -30,7 +30,7 @@ const NavigationController = ({ children }) => {
     // redirect to home and clear navigation history
     if (!currentUser && (
         location.pathname.startsWith('/edit-profile') || 
-        location.pathname.startsWith('/support') || 
+        location.pathname.startsWith('/chat') || 
         location.pathname.startsWith('/memory-list') ||
         location.pathname.startsWith('/clear-data')
     )) {
@@ -64,7 +64,7 @@ const App = () => {
                                 {/* Protected routes - user must be logged in AND email verified */}
                                 <Route element={<ProtectedRoute />}>
                                     <Route path="/edit-profile" element={<EditProfile />} />
-                                    <Route path="/support" element={<Support />} />
+                                    <Route path="/chat" element={<Chat />} />
                                     <Route path="/memory-list" element={<MemoryList />} />
                                     <Route path="/clear-data" element={<ClearData />} />
                                 </Route>

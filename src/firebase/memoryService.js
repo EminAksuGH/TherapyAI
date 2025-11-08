@@ -453,83 +453,24 @@ const checkMemorySimilarity = async (newMemoryContent, existingMemories) => {
     }
     
     try {
-        const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-        
+        // Call Next.js API route instead of OpenAI directly
         const response = await axios.post(
-            "https://api.openai.com/v1/chat/completions",
+            "/api/check-memory-similarity",
             {
-                model: "gpt-4o",
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are analyzing whether a new memory is a duplicate or too similar to existing memories. 
-
-Instructions:
-1. Compare the new memory content with each existing memory
-2. Determine if the new memory contains substantially the same information as any existing memory
-3. Rate similarity on a scale of 0-100 (0 = completely different, 100 = exact duplicate)
-4. Consider memories as duplicates if similarity is 70+ or if they contain the same key information
-5. Look for semantic similarity, not just exact text matches
-
-Return JSON only with this structure:
-{
-  "isDuplicate": boolean,
-  "highestSimilarity": number,
-  "similarMemoryId": string or null,
-  "similarMemoryContent": string or null,
-  "reasoning": string
-}`
-                    },
-                    {
-                        role: "user",
-                        content: `New memory to check:
-"${newMemoryContent}"
-
-Existing memories:
-${existingMemories.map((memory, index) => 
-    `${index + 1}. [ID: ${memory.id}] [Topic: ${memory.topic}]: ${memory.content}`
-).join('\n')}
-
-Check if the new memory is a duplicate or too similar to any existing memory. Return valid JSON only.`
-                    }
-                ],
-                temperature: 0.3,
-                max_tokens: 400
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${API_KEY}`
-                }
+                newMemoryContent,
+                existingMemories
             }
         );
 
-        if (!response.data || !response.data.choices || response.data.choices.length === 0) {
+        if (!response.data) {
             throw new Error("Invalid API response");
         }
 
-        const aiResponse = response.data.choices[0].message.content;
-        
-        let jsonData;
-        try {
-            jsonData = JSON.parse(aiResponse);
-        } catch (e) {
-            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                jsonData = JSON.parse(jsonMatch[0]);
-            } else {
-                return { isDuplicate: false, similarMemory: null, similarity: 0 };
-            }
-        }
-
         return {
-            isDuplicate: jsonData.isDuplicate || false,
-            similarity: jsonData.highestSimilarity || 0,
-            similarMemory: jsonData.similarMemoryId ? {
-                id: jsonData.similarMemoryId,
-                content: jsonData.similarMemoryContent
-            } : null,
-            reasoning: jsonData.reasoning || "No detailed analysis available"
+            isDuplicate: response.data.isDuplicate || false,
+            similarity: response.data.similarity || 0,
+            similarMemory: response.data.similarMemory || null,
+            reasoning: response.data.reasoning || "No detailed analysis available"
         };
         
     } catch (error) {
@@ -608,147 +549,22 @@ export const analyzeMemoryImportance = async (conversationText, previousContext 
             }
         }
         
-        // Use the API key from environment variables
-        const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-        
-        // Call OpenAI API to analyze the conversation
+        // Call Next.js API route instead of OpenAI directly
         const response = await axios.post(
-            "https://api.openai.com/v1/chat/completions",
+            "/api/analyze-memory",
             {
-                model: "gpt-4o",
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are an AI that analyzes conversations to determine what information might be important to remember for future interactions.
-                        
-Instructions:
-1. Analyze the given message and extract any potentially important information about the user
-2. Assign an importance score (1-10) based on how critical this information would be for future interactions
-3. Create a concise memory statement summarizing the important information IN TURKISH (since this is a Turkish therapy app)
-4. Determine appropriate topics/tags for categorizing this memory IN TURKISH
-5. CRITICAL: Check if this information is already captured in existing memories to avoid duplicates
-
-For importance scoring - USE THE FULL RANGE (1-10) based on actual content, but be conservative:
-- 1-3: Very casual remarks, routine information, simple questions or basic preferences
-- 4-5: Noteworthy information, moderate emotional content, recurring interests
-- 6-7: Significant personal information, important relationships, notable events
-- 8-10: Critical information (major life events, trauma, crucial needs, deep emotional content)
-
-Be conservative with scoring - memories should be meaningful:
-- Default to lower scores (1-5) unless content is truly significant
-- Reserve scores of 6+ for genuinely important emotional or personal content
-- Casual memory checks (like "do you remember X?") without emotional depth should be 2-3
-- Basic biographical information without emotional context should be 3-4
-- New user preferences or interests without emotional significance should be 4-5
-- Only conversations with real emotional depth, important relationships, or significant life events should reach 6+
-
-Focus especially on:
-- Personal relationships (with appropriate score based on significance)
-- Names and how the user wants to be addressed (CRITICAL - score 7+)
-- Emotional states or patterns
-- Life events (minor to major)
-- Expressed needs or challenges
-- Recurring themes or concerns
-- Cultural context or background
-- User preferences for interaction style
-
-IMPORTANT: Since this is a Turkish therapy application:
-- Write all memory content (extractedMemory) in TURKISH
-- Use Turkish topic names (e.g., "isim" instead of "name", "tercihler" instead of "preferences")
-- Keep the natural flow of Turkish language in memory descriptions
-
-Do not extract or remember:
-- Simple greetings or short exchanges without substance
-- Specific passwords or security information
-- Private identifiable information that isn't relevant for emotional support
-- Information that is already captured in existing memories
-- Each message doesn't necessarily need to create a new memory
-- Generic memory queries like "do you remember?" without specific content
-- Questions that are just checking if AI remembers something
-- Factual queries unrelated to emotional support (score appropriately if they must be remembered)
-
-DUPLICATE PREVENTION:
-- Carefully compare the new information with existing memories
-- If similar information already exists, set shouldStore to false
-- Only store if the information adds significant new details or updates existing information
-- Consider variations in wording but same core meaning as duplicates
-
-About memory-related queries:
-- If a query like "Do you remember X?" contains important personal information (like names, relationships, events), DO extract the actual information about X
-- Rate the importance based on the content being asked about, not the fact that it's a memory query
-- Assign appropriate scores to memory queries based on their actual content value
-- If a memory query reveals new information about the user's life or relationships, assign a score that matches its true significance
-
-Special attention to names and addressing:
-- When a user shares their name (e.g., "Benim adım X" / "My name is X"), this should be scored 7+ as it's critical for personalization
-- When a user requests specific addressing (e.g., "Bana X olarak hitap et" / "Address me as X"), this should be scored 7+ 
-- Turkish phrases like "bundan böyle", "istiyorum", "hitap et" often indicate important preferences
-- Names and addressing preferences are fundamental to building rapport and should always be remembered
-- For names: write in Turkish like "Kullanıcının adı X" instead of "User's name is X"
-- For addressing preferences: write in Turkish like "X adıyla hitap edilmek istiyor" instead of "Prefers to be addressed as X"
-
-Output JSON only with the following structure:
-{
-  "importance": number, // 1-10, using the full scale but be conservative
-  "extractedMemory": string, // Concise memory statement IN TURKISH
-  "topics": string[], // 1-3 relevant topic tags IN TURKISH
-  "reasoning": string, // Brief explanation of why this information matters and justification for the importance score IN TURKISH
-  "shouldStore": boolean // Whether this is worth storing as a new memory, default to false for importance < 6 or if duplicate
-}`
-                    },
-                    {
-                        role: "user",
-                        content: `Previous context (if any):
-${previousContext}
-
-User's message:
-${conversationText}
-
-Existing user memories:
-${existingMemories.map(m => `[${m.topic}]: ${m.content}`).join('\n')}
-
-Analyze this message and determine what should be remembered. CRITICALLY check if this information is already captured in existing memories to avoid duplicates. Return valid JSON only.`
-                    }
-                ],
-                temperature: 0.3,
-                max_tokens: 500
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${API_KEY}`
-                }
+                conversationText,
+                previousContext,
+                existingMemories
             }
         );
 
-        if (!response.data || !response.data.choices || response.data.choices.length === 0) {
+        if (!response.data) {
             throw new Error("Invalid API response");
         }
 
-        // Parse the AI response to extract the JSON
-        const aiResponse = response.data.choices[0].message.content;
-        
-        // Extract the JSON data from the response
-        let jsonData;
-        try {
-            // Try to parse the entire response as JSON
-            jsonData = JSON.parse(aiResponse);
-        } catch (e) {
-            // If that fails, try to extract JSON from the text
-            const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                jsonData = JSON.parse(jsonMatch[0]);
-            } else {
-                // Fallback values if parsing fails
-                jsonData = {
-                    importance: 5,
-                    extractedMemory: conversationText.substring(0, 100),
-                    topics: ["Sohbet"],
-                    reasoning: "Varsayılan hafıza oluşturma",
-                    shouldStore: existingMemories.length === 0 // Only store if no memories exist
-                };
-            }
-        }
+        // The API route already returns parsed JSON
+        const jsonData = response.data;
         
         // Capitalize topics with Turkish-specific rules
         if (jsonData.topics && Array.isArray(jsonData.topics)) {

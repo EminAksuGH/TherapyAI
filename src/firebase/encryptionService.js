@@ -6,8 +6,10 @@
 // Environment detection
 const isWeb = typeof window !== 'undefined' && typeof window.crypto !== 'undefined';
 
-// Get encryption key from environment
-const ENCRYPTION_KEY_STRING = import.meta.env.VITE_ENCRYPTION_KEY;
+// Get encryption key from environment (Next.js)
+const ENCRYPTION_KEY_STRING = typeof process !== 'undefined' && process.env 
+    ? process.env.NEXT_PUBLIC_ENCRYPTION_KEY 
+    : undefined;
 
 if (!ENCRYPTION_KEY_STRING) {
     console.error('⚠️ WARNING: Encryption key not found in environment variables');
