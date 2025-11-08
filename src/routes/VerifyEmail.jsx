@@ -15,6 +15,8 @@ const VerifyEmail = () => {
   const auth = getAuth();
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+    
     document.body.classList.add('auth-page');
     
     // Parse the URL for the action code (oobCode)
@@ -63,7 +65,9 @@ const VerifyEmail = () => {
     verifyEmail();
     
     return () => {
-      document.body.classList.remove('auth-page');
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('auth-page');
+      }
     };
   }, [location, navigate, auth]);
 

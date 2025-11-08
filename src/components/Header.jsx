@@ -90,9 +90,13 @@ const Header = () => {
     };
 
     useEffect(() => {
+        if (typeof document === 'undefined') return;
+        
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
+            if (typeof document !== 'undefined') {
+                document.removeEventListener('mousedown', handleClickOutside);
+            }
         };
     }, [menuOpen, dropdownOpen]);
 

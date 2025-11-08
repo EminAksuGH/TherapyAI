@@ -25,11 +25,15 @@ const Signup = () => {
 
   // Add effect to set auth-page class on body
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+    
     document.body.classList.add('auth-page');
     
     // Cleanup function to remove class when component unmounts
     return () => {
-      document.body.classList.remove('auth-page');
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('auth-page');
+      }
     };
   }, []);
 

@@ -545,7 +545,7 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
 
     // Function to ensure chat log has appropriate height
     const adjustChatLogHeight = () => {
-        if (typeof document === 'undefined' || !chatLogRef.current) return;
+        if (typeof window === 'undefined' || typeof document === 'undefined' || !chatLogRef.current) return;
         
         const chatContainer = chatLogRef.current.parentElement;
         if (chatContainer) {

@@ -24,6 +24,8 @@ const Login = () => {
   const location = useLocation();
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+    
     document.body.classList.add('auth-page');
     
     // Check URL parameters
@@ -60,7 +62,9 @@ const Login = () => {
     }
     
     return () => {
-      document.body.classList.remove('auth-page');
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('auth-page');
+      }
     };
   }, [location, currentUser, logout]);
 
