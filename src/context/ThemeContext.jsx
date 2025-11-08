@@ -15,8 +15,12 @@ const ThemeProvider = ({ children }) => {
     const [theme, setTheme] = useState(getInitialTheme);
 
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
+        if (typeof document !== 'undefined') {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+        if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem('theme', theme);
+        }
     }, [theme]);
 
     const toggleTheme = () => {

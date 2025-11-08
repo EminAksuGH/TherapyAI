@@ -545,28 +545,30 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
 
     // Function to ensure chat log has appropriate height
     const adjustChatLogHeight = () => {
-        if (chatLogRef.current) {
-            const chatContainer = chatLogRef.current.parentElement;
-            if (chatContainer) {
-                const containerHeight = chatContainer.clientHeight;
-                const headerHeight = document.querySelector(`.${styles.chatHeader}`)?.clientHeight || 60;
-                const formHeight = document.querySelector(`.${styles.chatForm}`)?.clientHeight || 60;
-                const padding = 40; // Increased padding to ensure no overflow
-                
-                const availableHeight = containerHeight - headerHeight - formHeight - padding;
-                chatLogRef.current.style.height = `${Math.max(200, availableHeight)}px`;
-                chatLogRef.current.style.maxHeight = `${Math.max(200, availableHeight)}px`;
-                
-                // Ensure scrolling works by setting overflow explicitly
-                chatLogRef.current.style.overflowY = 'auto';
-                chatLogRef.current.style.display = 'flex';
-                chatLogRef.current.style.flexDirection = 'column';
-            }
+        if (typeof document === 'undefined' || !chatLogRef.current) return;
+        
+        const chatContainer = chatLogRef.current.parentElement;
+        if (chatContainer) {
+            const containerHeight = chatContainer.clientHeight;
+            const headerHeight = document.querySelector(`.${styles.chatHeader}`)?.clientHeight || 60;
+            const formHeight = document.querySelector(`.${styles.chatForm}`)?.clientHeight || 60;
+            const padding = 40; // Increased padding to ensure no overflow
+            
+            const availableHeight = containerHeight - headerHeight - formHeight - padding;
+            chatLogRef.current.style.height = `${Math.max(200, availableHeight)}px`;
+            chatLogRef.current.style.maxHeight = `${Math.max(200, availableHeight)}px`;
+            
+            // Ensure scrolling works by setting overflow explicitly
+            chatLogRef.current.style.overflowY = 'auto';
+            chatLogRef.current.style.display = 'flex';
+            chatLogRef.current.style.flexDirection = 'column';
         }
     };
     
     // Adjust chat log height on window resize
     useEffect(() => {
+        if (typeof window === 'undefined') return;
+        
         adjustChatLogHeight();
         
         const handleResize = () => {
