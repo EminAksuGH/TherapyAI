@@ -17,13 +17,6 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Debug: Check if API key is loaded (remove in production)
-if (!firebaseConfig.apiKey) {
-  console.error('❌ Firebase API key is missing!');
-  console.error('Make sure .env.local has NEXT_PUBLIC_FIREBASE_API_KEY and restart the dev server');
-  console.log('Current process.env keys:', typeof process !== 'undefined' ? Object.keys(process.env || {}).filter(k => k.startsWith('NEXT_PUBLIC_')) : 'process not available');
-}
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
