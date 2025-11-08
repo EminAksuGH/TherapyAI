@@ -3,6 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   // Transpile Firebase and other packages if needed
   transpilePackages: ['firebase'],
+  // Disable server-side rendering for pages that use client-side routing
+  serverExternalPackages: ['react-router-dom'],
   // Security headers for HTTPS enforcement
   async headers() {
     return [

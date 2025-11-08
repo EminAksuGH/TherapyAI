@@ -1,5 +1,4 @@
 import '../src/index.css';
-import ThemeScript from './ThemeScript';
 
 export const metadata = {
   title: 'TherapyAI',
@@ -14,9 +13,25 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="icon" type="image/png" href="/icon.png" />
         <link rel="apple-touch-icon" href="/icon.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+                    var theme = localStorage.getItem('theme');
+                    if (!theme) {
+                      theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    }
+                    document.documentElement.setAttribute('data-theme', theme);
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body>
-        <ThemeScript />
         {children}
       </body>
     </html>

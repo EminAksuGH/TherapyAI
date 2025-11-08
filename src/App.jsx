@@ -1,23 +1,37 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import Home from './routes/Home';
-import Privacy from './routes/Privacy';
-import Chat from './routes/Chat';
-import Login from './routes/Login';
-import Signup from './routes/Signup';
-import ForgotPassword from './routes/ForgotPassword';
-import ChangePassword from './routes/ChangePassword';
-import VerifyEmail from './routes/VerifyEmail';
-import EditProfile from './routes/EditProfile';
-import MemoryList from './routes/MemoryList';
-import ClearData from './routes/ClearData';
 import ProtectedRoute from './components/ProtectedRoute';
-import FirebaseActionHandler from './routes/FirebaseActionHandler';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MemoryProvider } from './context/MemoryContext';
 import styles from './App.module.css';
+
+// Lazy load routes for better code splitting
+const Home = lazy(() => import('./routes/Home'));
+const Privacy = lazy(() => import('./routes/Privacy'));
+const Chat = lazy(() => import('./routes/Chat'));
+const Login = lazy(() => import('./routes/Login'));
+const Signup = lazy(() => import('./routes/Signup'));
+const ForgotPassword = lazy(() => import('./routes/ForgotPassword'));
+const ChangePassword = lazy(() => import('./routes/ChangePassword'));
+const VerifyEmail = lazy(() => import('./routes/VerifyEmail'));
+const EditProfile = lazy(() => import('./routes/EditProfile'));
+const MemoryList = lazy(() => import('./routes/MemoryList'));
+const ClearData = lazy(() => import('./routes/ClearData'));
+const FirebaseActionHandler = lazy(() => import('./routes/FirebaseActionHandler'));
+
+// Loading component for lazy routes
+const RouteLoader = () => (
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    minHeight: '200px' 
+  }}>
+    Yükleniyor...
+  </div>
+);
 
 // Component to handle navigation after auth state changes
 const NavigationController = ({ children }) => {
@@ -49,26 +63,28 @@ const App = () => {
                     <div className={styles.appContainer}>
                         <Header />
                         <main className={styles.mainContent}>
-                            <Routes>
-                                {/* Public routes */}
-                                <Route path="/" element={<Home />} />
-                                <Route path="/login" element={<Login />} />
-                                <Route path="/signup" element={<Signup />} />
-                                <Route path="/forgot-password" element={<ForgotPassword />} />
-                                <Route path="/change-password" element={<ChangePassword />} />
-                                <Route path="/verify-email" element={<VerifyEmail />} />
-                                <Route path="/privacy" element={<Privacy />} />
-                                <Route path="/logout" element={<Navigate to="/" replace />} />
-                                <Route path="/action-handler" element={<FirebaseActionHandler />} />
-                                
-                                {/* Protected routes - user must be logged in AND email verified */}
-                                <Route element={<ProtectedRoute />}>
-                                    <Route path="/edit-profile" element={<EditProfile />} />
-                                    <Route path="/chat" element={<Chat />} />
-                                    <Route path="/memory-list" element={<MemoryList />} />
-                                    <Route path="/clear-data" element={<ClearData />} />
-                                </Route>
-                            </Routes>
+                            <Suspense fallback={<RouteLoader />}>
+                                <Routes>
+                                    {/* Public routes */}
+                                    <Route path="/" element={<Home />} />
+                                    <Route path="/login" element={<Login />} />
+                                    <Route path="/signup" element={<Signup />} />
+                                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                                    <Route path="/change-password" element={<ChangePassword />} />
+                                    <Route path="/verify-email" element={<VerifyEmail />} />
+                                    <Route path="/privacy" element={<Privacy />} />
+                                    <Route path="/logout" element={<Navigate to="/" replace />} />
+                                    <Route path="/action-handler" element={<FirebaseActionHandler />} />
+                                    
+                                    {/* Protected routes - user must be logged in AND email verified */}
+                                    <Route element={<ProtectedRoute />}>
+                                        <Route path="/edit-profile" element={<EditProfile />} />
+                                        <Route path="/chat" element={<Chat />} />
+                                        <Route path="/memory-list" element={<MemoryList />} />
+                                        <Route path="/clear-data" element={<ClearData />} />
+                                    </Route>
+                                </Routes>
+                            </Suspense>
                         </main>
                         <Footer />
                     </div>
