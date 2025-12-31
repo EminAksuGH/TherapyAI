@@ -67,7 +67,7 @@ Check if the new memory is a duplicate or too similar to any existing memory. Re
           }
         ],
         temperature: 0.3,
-        max_tokens: 400
+        max_tokens: 1200
       })
     });
 

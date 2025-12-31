@@ -164,7 +164,7 @@ Analyze this message and determine what should be remembered. CRITICALLY check i
           }
         ],
         temperature: 0.3,
-        max_tokens: 500
+        max_tokens: 1500
       })
     });
 
