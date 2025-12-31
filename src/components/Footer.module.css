@@ -1,7 +1,7 @@
 .footer {
     background-color: var(--card-bg);
     color: var(--text-color);
-    padding: 20px;
+    padding: 12px 20px;
     font-size: 0.95rem;
     border-top: 1px solid var(--button-bg);
     width: 100%;
@@ -13,7 +13,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
 }
 
 .footerLinks {
@@ -42,7 +42,7 @@
 
 @media (max-width: 768px) {
     .footer {
-        padding: 16px;
+        padding: 10px 16px;
     }
     
     .footerLinks {
@@ -60,7 +60,7 @@
 
 @media (max-width: 480px) {
     .footer {
-        padding: 12px;
+        padding: 8px 12px;
     }
     
     .footerLinks {

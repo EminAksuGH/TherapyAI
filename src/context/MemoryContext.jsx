@@ -154,6 +154,43 @@ export function MemoryProvider({ children }) {
     return topicCount < MAX_TOPICS;
   };
 
+  // Generate a contextual title from memory content
+  // This should only be called when we have valid memory content to save
+  const generateContextualTitle = (memoryContent) => {
+    if (!memoryContent || memoryContent.trim().length === 0) {
+      // This should never happen if we're saving a memory worth saving
+      // But if it does, throw an error to catch the issue
+      throw new Error("Cannot generate title from empty memory content");
+    }
+
+    // Remove common prefixes and clean up the text
+    let cleaned = memoryContent.trim();
+    
+    // Remove common Turkish prefixes that might not be useful in titles
+    cleaned = cleaned.replace(/^(?:kullanıcının|kullanıcı|benim|ben|onun|onların|bunun|şunun)\s+/i, '');
+    
+    // Extract first meaningful phrase (up to 30 characters or first sentence)
+    const firstSentence = cleaned.split(/[.!?。！？]/)[0].trim();
+    
+    // If first sentence is reasonable length, use it
+    if (firstSentence.length > 10 && firstSentence.length <= 40) {
+      return firstSentence;
+    }
+    
+    // Otherwise, take first 30 characters and add ellipsis if needed
+    if (cleaned.length > 30) {
+      // Try to break at word boundary
+      const truncated = cleaned.substring(0, 30);
+      const lastSpace = truncated.lastIndexOf(' ');
+      if (lastSpace > 15) {
+        return truncated.substring(0, lastSpace) + '...';
+      }
+      return truncated + '...';
+    }
+    
+    return cleaned;
+  };
+
   // AI-driven memory creation from conversation
   const createMemoryFromConversation = async (userMessage, conversationContext, conversationId) => {
     if (!currentUser || !memoryEnabled) return null;
@@ -222,12 +259,26 @@ export function MemoryProvider({ children }) {
         }
       }
       
-      // Check if we can add this topic (if it's new)
-      const primaryTopic = analysis.topics[0];
-      if (!canAddNewTopic(primaryTopic)) {
-        // If we can't add a new topic, use a generic one
-        analysis.topics[0] = "General Memory";
+      // Validate that we have memory content to save
+      // If there's no content worth saving, we shouldn't create a memory
+      if (!analysis.extractedMemory || analysis.extractedMemory.trim().length === 0) {
+        console.warn("Attempted to save memory with empty content, skipping");
+        return null;
       }
+      
+      // Use AI-generated title if available, otherwise generate contextual title from memory content
+      // The AI should generate contextual titles, but we have a fallback for safety
+      let memoryTitle;
+      if (analysis.title && analysis.title.trim().length > 0) {
+        // Use AI-generated title
+        memoryTitle = analysis.title.trim();
+      } else {
+        // Fallback: generate contextual title from memory content
+        memoryTitle = generateContextualTitle(analysis.extractedMemory);
+      }
+      
+      // Use the title as the memory topic (which is displayed as the title)
+      analysis.topics[0] = memoryTitle;
       
       // Create the memory with the AI-determined importance
       const memoryId = await memoryService.createMemory(

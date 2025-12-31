@@ -32,9 +32,15 @@ export async function POST(request) {
       
       // For explicit requests, we'll check duplicates via the similarity API
       // For now, return a response indicating it should be stored
+      // Generate a contextual title from the content
+      const title = contentToCheck.length > 40 
+        ? contentToCheck.substring(0, 37).trim() + '...'
+        : contentToCheck.substring(0, 40).trim();
+      
       return NextResponse.json({
         importance: 6,
         extractedMemory: contentToCheck,
+        title: title,
         topics: ["Kullanıcı Talebi"],
         reasoning: "Kullanıcı bu bilgiyi kaydetmek için özel olarak talepte bulundu",
         shouldStore: true
@@ -53,6 +59,7 @@ export async function POST(request) {
         return NextResponse.json({
           importance: 2,
           extractedMemory: conversationText.substring(0, 100),
+          title: "Genel Sohbet",
           topics: ["Sohbet"],
           reasoning: "Genel sorgu veya önemli kişisel içerik içermeyen basit selamlama",
           shouldStore: false
@@ -78,8 +85,9 @@ Instructions:
 1. Analyze the given message and extract any potentially important information about the user
 2. Assign an importance score (1-10) based on how critical this information would be for future interactions
 3. Create a concise memory statement summarizing the important information IN TURKISH (since this is a Turkish therapy app)
-4. Determine appropriate topics/tags for categorizing this memory IN TURKISH
-5. CRITICAL: Check if this information is already captured in existing memories to avoid duplicates
+4. Generate a contextual, descriptive title (10-40 characters) that summarizes the memory content IN TURKISH - this will be displayed as the memory title
+5. Determine appropriate topics/tags for categorizing this memory IN TURKISH
+6. CRITICAL: Check if this information is already captured in existing memories to avoid duplicates
 
 For importance scoring - USE THE FULL RANGE (1-10) based on actual content, but be conservative:
 - 1-3: Very casual remarks, routine information, simple questions or basic preferences
@@ -144,10 +152,17 @@ Output JSON only with the following structure:
 {
   "importance": number, // 1-10, using the full scale but be conservative
   "extractedMemory": string, // Concise memory statement IN TURKISH
-  "topics": string[], // 1-3 relevant topic tags IN TURKISH
+  "title": string, // Contextual, descriptive title (10-40 characters) summarizing the memory IN TURKISH - this will be displayed as the memory title
+  "topics": string[], // 1-3 relevant topic tags IN TURKISH for categorization
   "reasoning": string, // Brief explanation of why this information matters and justification for the importance score IN TURKISH
   "shouldStore": boolean // Whether this is worth storing as a new memory, default to false for importance < 6 or if duplicate
-}`
+}
+
+IMPORTANT ABOUT TITLES:
+- The title should be contextual and descriptive, not just a category name
+- It should summarize the key information in 10-40 characters
+- Examples: "Ahmet adıyla hitap edilmek istiyor", "Her gün sabah 7'de uyanıyor", "Ankara'da yaşıyor"
+- Avoid generic titles like "Genel Hafıza" or "Kullanıcı Tercihi" - be specific and contextual`
           },
           {
             role: "user",
@@ -164,7 +179,7 @@ Analyze this message and determine what should be remembered. CRITICALLY check i
           }
         ],
         temperature: 0.3,
-        max_tokens: 1500
+        max_tokens: 3000
       })
     });
 
@@ -198,9 +213,15 @@ Analyze this message and determine what should be remembered. CRITICALLY check i
       if (jsonMatch) {
         jsonData = JSON.parse(jsonMatch[0]);
       } else {
+        const fallbackMemory = conversationText.substring(0, 100);
+        const fallbackTitle = fallbackMemory.length > 40 
+          ? fallbackMemory.substring(0, 37).trim() + '...'
+          : fallbackMemory.substring(0, 40).trim();
+        
         jsonData = {
           importance: 5,
-          extractedMemory: conversationText.substring(0, 100),
+          extractedMemory: fallbackMemory,
+          title: fallbackTitle,
           topics: ["Sohbet"],
           reasoning: "Varsayılan hafıza oluşturma",
           shouldStore: existingMemories.length === 0
@@ -219,15 +240,29 @@ Analyze this message and determine what should be remembered. CRITICALLY check i
       }
     }
 
+    // Ensure title is present - generate from extractedMemory if AI didn't provide one
+    if (!jsonData.title && jsonData.extractedMemory) {
+      const memoryContent = jsonData.extractedMemory.trim();
+      jsonData.title = memoryContent.length > 40 
+        ? memoryContent.substring(0, 37).trim() + '...'
+        : memoryContent.substring(0, 40).trim();
+    }
+
     return NextResponse.json(jsonData);
 
   } catch (error) {
     console.error('Analyze memory API error:', error);
     const conversationText = body?.conversationText || '';
+    const errorMemory = conversationText.substring(0, 100);
+    const errorTitle = errorMemory.length > 40 
+      ? errorMemory.substring(0, 37).trim() + '...'
+      : errorMemory.substring(0, 40).trim();
+    
     return NextResponse.json(
       { 
         importance: 3,
-        extractedMemory: conversationText.substring(0, 100),
+        extractedMemory: errorMemory,
+        title: errorTitle,
         topics: ["Sohbet"],
         reasoning: "Varsayılan hafıza oluşturma (analiz başarısız)",
         shouldStore: false

@@ -113,7 +113,7 @@ MEMORY STATE AWARENESS:
         model: 'gpt-4o',
         messages: apiMessages,
         temperature: 0.9,
-        max_tokens: 6000
+        max_tokens: 15000
       })
     });
 

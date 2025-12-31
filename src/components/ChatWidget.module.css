@@ -5,13 +5,20 @@
     max-height: 90vh;
     position: relative;
     overflow: hidden;
+    gap: 0;
 }
 
 .sidebarContainer {
-    width: 280px;
+    width: 22%;
+    min-width: 280px;
+    max-width: 360px;
     height: 100%;
     flex-shrink: 0;
     z-index: 10;
+    border: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-right: none;
 }
 
 .mainChatContainer {
@@ -22,14 +29,18 @@
     flex-direction: column;
     overflow: hidden;
     border-radius: 0px 12px 12px 0px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 .chatContainer {
     width: 100%;
     height: 100%;
     background-color: var(--card-bg);
+    border: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
     border-top-right-radius: 12px;
     border-bottom-right-radius: 12px;
+    border-left: none;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
@@ -216,7 +227,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     height: auto;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
     padding-right: 12px;
     display: flex;
     flex-direction: column;
@@ -224,14 +235,14 @@
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-color) transparent;
     padding-top: 10px;
-    padding-bottom: 10px;
+    padding-bottom: 0;
     min-height: 200px;
 }
 
 .chatLog.filled {
     flex: 1;
     height: calc(100% - 140px);
-    margin-bottom: 1rem;
+    margin-bottom: 0;
     overflow-y: auto;
 }
 
@@ -269,6 +280,11 @@
     transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
     width: 100%;
     position: relative;
+}
+
+.aiMessage.lastMessage,
+.userMessage.lastMessage {
+    margin-bottom: 0;
 }
 
 .aiMessage p {
@@ -339,7 +355,7 @@
     font-style: italic;
     color: var(--text-color);
     opacity: 0.7;
-    margin: 10px 0;
+    margin: 6px 0 0 0;
     animation: pulse 1.5s infinite ease-in-out;
     padding: 8px 12px;
     display: inline-block;
@@ -367,8 +383,10 @@
     position: sticky;
     bottom: 0;
     background-color: var(--card-bg);
-    padding-top: 10px;
+    padding-top: 12px;
+    padding-bottom: 0;
     margin-top: auto;
+    border-top: 1px solid var(--border-color, rgba(229, 206, 235, 0.3));
 }
 
 .chatInput {
@@ -462,10 +480,13 @@
     
     .sidebarContainer {
         position: fixed;
-        left: -280px;
+        left: -80%;
         top: 0;
         bottom: 0;
         transition: left 0.3s ease;
+        width: 80%;
+        max-width: 320px;
+        min-width: 280px;
     }
     
     .sidebarContainer.open {

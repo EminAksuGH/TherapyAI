@@ -220,6 +220,19 @@ const ChatWidget = () => {
         }
     }, [chatLog]);
 
+    // Scroll when loading message appears or disappears
+    useEffect(() => {
+        if (chatLog.length > 0) {
+            // Scroll when loading starts (to show "Yazıyor...")
+            // and when loading finishes (to show the response)
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    scrollToBottom();
+                }, 100);
+            });
+        }
+    }, [loading, chatLog.length]);
+
     // Save message to Firestore if user is authenticated
     const saveMessageToFirestore = async (message, providedConversationId = null) => {
         if (!currentUser) return null;
