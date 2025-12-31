@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 /**
@@ -8,17 +8,21 @@ import { useAuth } from '../context/AuthContext';
  * @param {React.ReactNode} props.children - The component to render if user is not authenticated
  * @param {string} props.redirectTo - Where to redirect authenticated users (default: '/')
  * @param {boolean} props.requireEmailVerification - Whether to check for email verification (default: false)
+ * @param {boolean} props.allowOobCode - Skip redirect when oobCode query param is present (default: false)
  */
 const AuthRedirect = ({ 
   children, 
   redirectTo = '/', 
-  requireEmailVerification = false 
+  requireEmailVerification = false,
+  allowOobCode = false
 }) => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const hasOobCode = allowOobCode && Boolean(searchParams.get('oobCode'));
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && !hasOobCode) {
       // If user is authenticated
       if (requireEmailVerification) {
         // Only redirect if email is also verified
@@ -30,10 +34,10 @@ const AuthRedirect = ({
         navigate(redirectTo, { replace: true });
       }
     }
-  }, [currentUser, navigate, redirectTo, requireEmailVerification]);
+  }, [currentUser, navigate, redirectTo, requireEmailVerification, hasOobCode]);
 
   // Don't render children if user is authenticated and should be redirected
-  if (currentUser) {
+  if (currentUser && !hasOobCode) {
     if (requireEmailVerification) {
       // Only hide if email is verified
       if (currentUser.emailVerified) {

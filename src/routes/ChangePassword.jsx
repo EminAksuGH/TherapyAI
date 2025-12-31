@@ -87,7 +87,7 @@ const ChangePassword = () => {
   }
 
   return (
-    <AuthRedirect>
+    <AuthRedirect allowOobCode>
       <div className={styles.authContainer}>
         <div className={styles.authForm}>
                   <h2>Yeni Şifre Belirle</h2>
