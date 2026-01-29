@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const FirebaseActionHandler = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const mode = searchParams.get("mode");
   const oobCode = searchParams.get("oobCode");
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!mode || !oobCode) {
@@ -23,7 +25,7 @@ const FirebaseActionHandler = () => {
     }
   }, [mode, oobCode, navigate]);
 
-  return <p>Yönlendiriliyor...</p>;
+  return <p>{t('firebase.redirecting')}</p>;
 };
 
 export default FirebaseActionHandler; 

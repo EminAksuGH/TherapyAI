@@ -4,11 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { useMemory } from '../context/MemoryContext';
 import { FaTrash, FaExclamationTriangle, FaArrowLeft, FaDatabase, FaShieldAlt } from 'react-icons/fa';
 import styles from './ClearData.module.css';
+import { useTranslation } from 'react-i18next';
 
 const ClearData = () => {
   const { currentUser, reloadUser, clearUserData } = useAuth();
   const { refreshMemoryData } = useMemory();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [isClearing, setIsClearing] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
@@ -16,7 +18,7 @@ const ClearData = () => {
 
   const clearHistory = async () => {
     if (!currentUser) {
-      setError('Kullanıcı oturumu bulunamadı.');
+      setError(t('clearData.sessionMissing'));
       return;
     }
 
@@ -34,18 +36,18 @@ const ClearData = () => {
       setIsClearing(false);
       
       // Show success message and navigate back
-      alert('Sohbet geçmişiniz ve hatıralarınız başarıyla temizlendi.');
+      alert(t('clearData.deleteSuccess'));
       navigate('/');
     } catch (e) {
       setIsClearing(false);
-      setError(e.message || 'Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+      setError(e.message || t('clearData.deleteError'));
       console.error('Clear data error:', e);
     }
   };
 
   const handleConfirmDelete = () => {
     if (window.confirm(
-      'Bu işlem geri alınamaz! Tüm sohbet geçmişiniz ve hatıralarınız kalıcı olarak silinecektir. Devam etmek istediğinizden emin misiniz?'
+      t('clearData.deleteConfirmPrompt')
     )) {
       setConfirmVisible(true);
     }
@@ -63,8 +65,8 @@ const ClearData = () => {
             <FaArrowLeft />
           </button>
           <div className={styles.headerContent}>
-            <h1 className={styles.title}>Veri Yönetimi</h1>
-            <p className={styles.subtitle}>Sohbet geçmişinizi ve hatıralarınızı yönetin</p>
+            <h1 className={styles.title}>{t('clearData.title')}</h1>
+            <p className={styles.subtitle}>{t('clearData.subtitle')}</p>
           </div>
         </div>
 
@@ -72,7 +74,7 @@ const ClearData = () => {
           <div className={styles.errorCard}>
             <FaExclamationTriangle className={styles.errorIcon} />
             <div className={styles.errorContent}>
-              <h4>Hata Oluştu</h4>
+              <h4>{t('clearData.errorTitle')}</h4>
               <p>{error}</p>
             </div>
           </div>
@@ -84,11 +86,11 @@ const ClearData = () => {
               <FaDatabase />
             </div>
             <div className={styles.infoContent}>
-              <h3>Ne Silinecek?</h3>
+              <h3>{t('clearData.whatDeleted')}</h3>
               <ul>
-                <li>Tüm sohbet geçmişiniz</li>
-                <li>Kaydedilen hatıralarınız</li>
-                <li>Konuşma verileriniz</li>
+                <li>{t('clearData.whatDeletedItems.chatHistory')}</li>
+                <li>{t('clearData.whatDeletedItems.memories')}</li>
+                <li>{t('clearData.whatDeletedItems.conversations')}</li>
               </ul>
             </div>
           </div>
@@ -98,11 +100,11 @@ const ClearData = () => {
               <FaShieldAlt />
             </div>
             <div className={styles.infoContent}>
-              <h3>Ne Korunacak?</h3>
+              <h3>{t('clearData.whatPreserved')}</h3>
               <ul>
-                <li>Hesap bilgileriniz</li>
-                <li>Profil ayarlarınız</li>
-                <li>Giriş bilgileriniz</li>
+                <li>{t('clearData.whatPreservedItems.account')}</li>
+                <li>{t('clearData.whatPreservedItems.profile')}</li>
+                <li>{t('clearData.whatPreservedItems.login')}</li>
               </ul>
             </div>
           </div>
@@ -111,11 +113,11 @@ const ClearData = () => {
         <div className={styles.warningCard}>
           <div className={styles.warningHeader}>
             <FaExclamationTriangle className={styles.warningIcon} />
-            <h3>Önemli Uyarı</h3>
+            <h3>{t('clearData.warningTitle')}</h3>
           </div>
           <div className={styles.warningContent}>
-            <p>Bu işlem <strong>geri alınamaz</strong>. Silinen veriler hiçbir şekilde kurtarılamaz.</p>
-            <p>Devam etmeden önce bu kararınızdan emin olduğunuzdan emin olun.</p>
+            <p>{t('clearData.warningLine1')}</p>
+            <p>{t('clearData.warningLine2')}</p>
           </div>
         </div>
 
@@ -128,12 +130,12 @@ const ClearData = () => {
             {isClearing ? (
               <div className={styles.loadingContent}>
                 <div className={styles.spinner}></div>
-                <span>Veriler Temizleniyor...</span>
+                <span>{t('clearData.clearing')}</span>
               </div>
             ) : (
               <div className={styles.buttonContent}>
                 <FaTrash />
-                <span>Tüm Verileri Temizle</span>
+                <span>{t('clearData.clearButton')}</span>
               </div>
             )}
           </button>
@@ -148,14 +150,14 @@ const ClearData = () => {
               <div className={styles.modalIcon}>
                 <FaExclamationTriangle />
               </div>
-              <h3 className={styles.modalTitle}>Son Onay</h3>
+              <h3 className={styles.modalTitle}>{t('clearData.confirmTitle')}</h3>
             </div>
             <div className={styles.modalBody}>
               <p className={styles.modalMessage}>
-                Bu işlemle <strong>tüm sohbet geçmişiniz ve hatıralarınız</strong> kalıcı olarak silinecek.
+                {t('clearData.confirmMessage')}
               </p>
               <div className={styles.modalWarning}>
-                Bu işlem geri alınamaz!
+                {t('clearData.confirmWarning')}
               </div>
             </div>
             <div className={styles.modalActions}>
@@ -164,7 +166,7 @@ const ClearData = () => {
                 onClick={() => setConfirmVisible(false)} 
                 disabled={isClearing}
               >
-                İptal Et
+                {t('clearData.cancel')}
               </button>
               <button 
                 className={styles.modalDeleteButton} 
@@ -174,10 +176,10 @@ const ClearData = () => {
                 {isClearing ? (
                   <div className={styles.loadingContent}>
                     <div className={styles.spinner}></div>
-                    <span>Siliniyor...</span>
+                    <span>{t('clearData.deleting')}</span>
                   </div>
                 ) : (
-                  'Evet, Sil'
+                  t('clearData.confirmYes')
                 )}
               </button>
             </div>

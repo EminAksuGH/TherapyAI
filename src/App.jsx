@@ -6,6 +6,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MemoryProvider } from './context/MemoryContext';
 import styles from './App.module.css';
+import { useTranslation } from 'react-i18next';
+import i18n, { getLocaleFromPath } from './i18n';
 
 // Lazy load routes for better code splitting
 const Home = lazy(() => import('./routes/Home'));
@@ -22,16 +24,19 @@ const ClearData = lazy(() => import('./routes/ClearData'));
 const FirebaseActionHandler = lazy(() => import('./routes/FirebaseActionHandler'));
 
 // Loading component for lazy routes
-const RouteLoader = () => (
-  <div style={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    minHeight: '200px' 
-  }}>
-    Yükleniyor...
-  </div>
-);
+const RouteLoader = () => {
+  const { t } = useTranslation();
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '200px' 
+    }}>
+      {t('common.loading')}
+    </div>
+  );
+};
 
 // Component to handle navigation after auth state changes
 const NavigationController = ({ children }) => {
@@ -55,11 +60,27 @@ const NavigationController = ({ children }) => {
   return children;
 };
 
+// Component to sync i18n language with URL locale
+const LocaleSyncer = () => {
+    const location = useLocation();
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const locale = getLocaleFromPath(window.location.pathname);
+        if (i18n.language !== locale) {
+            i18n.changeLanguage(locale);
+        }
+    }, [location.pathname]);
+
+    return null;
+};
+
 const App = () => {
     return (
         <AuthProvider>
             <MemoryProvider>
                 <NavigationController>
+                    <LocaleSyncer />
                     <div className={styles.appContainer}>
                         <Header />
                         <main className={styles.mainContent}>

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import AuthRedirect from '../components/AuthRedirect';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from './Auth.module.css';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ const Login = () => {
   const { login, verifyEmail, currentUser, logout, reloadUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -34,7 +36,7 @@ const Login = () => {
     const requireVerification = params.get('requireVerification');
     
     if (emailVerified === 'true') {
-      setMessage('E-posta adresiniz doğrulandı! Şimdi giriş yapabilirsiniz.');
+      setMessage(t('auth.messages.emailVerifiedSuccess'));
       
       // If the user is already logged in, reload auth state to update emailVerified status
       if (currentUser) {
@@ -51,7 +53,7 @@ const Login = () => {
     
     // Handle redirect from protected routes
     if (requireVerification === 'true' && currentUser) {
-      setError('E-posta adresiniz doğrulanmadan bu sayfaya erişemezsiniz.');
+      setError(t('auth.messages.requireVerification'));
       setEmailVerificationState({
         needsVerification: true,
         email: currentUser.email
@@ -80,10 +82,10 @@ const Login = () => {
     try {
       setResendLoading(true);
       await verifyEmail();
-      setMessage('Doğrulama e-postası tekrar gönderildi. Lütfen gelen kutunuzu kontrol edin.');
+      setMessage(t('auth.messages.resendSuccess'));
       setEmailVerificationState({ needsVerification: false, email: '' });
     } catch (err) {
-      setError('Doğrulama e-postası gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+      setError(t('auth.messages.resendError'));
     } finally {
       setResendLoading(false);
     }
@@ -94,7 +96,7 @@ const Login = () => {
   
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      return setError('Lütfen e-posta adresine bir \'@\' ekleyin');
+      return setError(t('auth.messages.invalidEmail'));
     }
   
     try {
@@ -105,7 +107,7 @@ const Login = () => {
       
       // Check if email is verified
       if (!userCredential.user.emailVerified) {
-        setError('E-posta adresiniz henüz doğrulanmadı. Lütfen önce e-posta adresinizi doğrulayın.');
+        setError(t('auth.messages.unverifiedEmail'));
         setEmailVerificationState({
           needsVerification: true,
           email: formData.email
@@ -121,13 +123,13 @@ const Login = () => {
         err.code === 'auth/wrong-password' ||
         err.code === 'auth/invalid-credential'
       ) {
-        setError('Geçersiz e-posta veya parola');
+        setError(t('auth.messages.invalidCredentials'));
       } else if (err.code === 'auth/invalid-email') {
-        setError('Lütfen e-posta adresine bir \'@\' ekleyin');
+        setError(t('auth.messages.invalidEmail'));
       } else if (err.code === 'auth/too-many-requests') {
-        setError('Çok fazla deneme. Daha sonra tekrar deneyin');
+        setError(t('auth.messages.tooManyRequests'));
       } else {
-        setError('Giriş başarısız');
+        setError(t('auth.messages.loginFailed'));
       }
     
     
@@ -140,31 +142,31 @@ const Login = () => {
     <AuthRedirect requireEmailVerification={true}>
       <div className={styles.authContainer}>
         <div className={styles.authForm}>
-          <h2>Giriş Yap</h2>
+          <h2>{t('auth.titles.login')}</h2>
           {error && <div className={styles.error}>{error}</div>}
           {message && <div className={styles.success}>{message}</div>}
         
         {emailVerificationState.needsVerification ? (
           <div className={styles.verificationNotice}>
-            <p>E-posta adresiniz ({emailVerificationState.email}) henüz doğrulanmadı.</p>
-            <p>Korumalı sayfalara erişim için e-posta doğrulaması gerekmektedir.</p>
+            <p>{t('auth.verification.notVerified', { email: emailVerificationState.email })}</p>
+            <p>{t('auth.verification.requiresVerification')}</p>
             <button 
               onClick={handleResendVerification} 
               className={styles.resendButton}
               disabled={resendLoading}
             >
-              {resendLoading ? 'Gönderiliyor...' : 'Doğrulama E-postasını Tekrar Gönder'}
+              {resendLoading ? t('auth.actions.resendVerificationLoading') : t('auth.actions.resendVerification')}
             </button>
             <div className={styles.authLinks}>
               <Link to="/login" onClick={() => setEmailVerificationState({ needsVerification: false, email: '' })}>
-                Giriş sayfasına dön
+                {t('auth.links.backToLogin')}
               </Link>
             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
             <div className={styles.formGroup}>
-              <label htmlFor="email">E-posta</label>
+              <label htmlFor="email">{t('auth.labels.email')}</label>
               <input
                 type="email"
                 id="email"
@@ -176,7 +178,7 @@ const Login = () => {
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="password">Parola</label>
+              <label htmlFor="password">{t('auth.labels.password')}</label>
               <div className={styles.passwordInputContainer}>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -190,7 +192,7 @@ const Login = () => {
                   type="button"
                   className={styles.passwordToggle}
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                  aria-label={showPassword ? t('auth.showHide.hidePassword') : t('auth.showHide.showPassword')}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
@@ -202,7 +204,7 @@ const Login = () => {
               className={styles.authButton}
               disabled={loading}
             >
-              {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+              {loading ? t('auth.actions.loginLoading') : t('auth.actions.login')}
             </button>
           </form>
         )}
@@ -210,11 +212,11 @@ const Login = () => {
         {!emailVerificationState.needsVerification && (
           <>
             <div className={styles.authLinks}>
-              <Link to="/forgot-password">Parolamı Unuttum</Link>
+              <Link to="/forgot-password">{t('auth.links.forgotPassword')}</Link>
             </div>
             
             <div className={styles.authLinks}>
-              Hesabınız yok mu? <Link to="/signup">Kayıt Ol</Link>
+              {t('auth.links.noAccount')} <Link to="/signup">{t('auth.links.signup')}</Link>
             </div>
           </>
         )}

@@ -25,6 +25,7 @@ import {
 import { Link, Navigate } from "react-router-dom";
 import ConversationSidebar from "./ConversationSidebar";
 import FeedbackModal from "./FeedbackModal";
+import { useTranslation } from 'react-i18next';
 
 const ChatWidget = () => {
     const [message, setMessage] = useState("");
@@ -48,17 +49,18 @@ const ChatWidget = () => {
         refreshMemoryData,
         MAX_TOPICS
     } = useMemory();
+    const { t } = useTranslation();
 
     // Prevent access for unauthenticated users
     if (!currentUser) {
         return (
             <div className={styles.authRequired}>
-                <h2>TherapyAI'a Hoş Geldiniz</h2>
-                <p>Duygusal destek ve zihinsel iyi oluş konusunda size yardımcı olmak için buradayız.</p>
-                <p>Sohbeti kullanmak için lütfen giriş yapın veya kaydolun.</p>
+                <h2>{t('chat.authRequiredTitle')}</h2>
+                <p>{t('chat.authRequiredDesc1')}</p>
+                <p>{t('chat.authRequiredDesc2')}</p>
                 <div className={styles.authButtons}>
-                    <Link to="/login" className={styles.authButton}>Giriş Yap</Link>
-                    <Link to="/signup" className={styles.authButton}>Kaydol</Link>
+                    <Link to="/login" className={styles.authButton}>{t('auth.actions.login')}</Link>
+                    <Link to="/signup" className={styles.authButton}>{t('auth.actions.signup')}</Link>
                 </div>
             </div>
         );
@@ -94,7 +96,7 @@ const ChatWidget = () => {
                 userId: currentUser.uid,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-                title: await encryptMessage("Yeni Konuşma"), // Encrypt initial conversation title
+                title: await encryptMessage(t('conversation.newConversation')), // Encrypt initial conversation title
                 messageCount: 0 // Add a counter to track messages
             });
             
@@ -438,7 +440,7 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
                                 // Only show message when user explicitly asked to save something
                                 const duplicateMessage = { 
                                     sender: "ai", 
-                                    text: `Bu bilgiyi zaten hafızamda tutuyorum. Benzer bir kayıt mevcut, bu yüzden tekrar kaydetmiyorum.` 
+                                    text: t('chat.memoryDuplicate')
                                 };
                                 
                                 // Add duplicate message to chat
@@ -451,7 +453,7 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
                                 // Send a message to the user about reaching memory limits
                                 const limitMessage = { 
                                     sender: "ai", 
-                                    text: `Maalesef hafıza limitine ulaştım. Yeni bilgileri kaydetmeden önce bazı eski konuları temizlemen gerekiyor.` 
+                                    text: t('chat.memoryLimit')
                                 };
                                 
                                 // Add limit message to chat
@@ -486,16 +488,15 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
             
         } catch (error) {
             console.error("API Error:", error);
-            const errorMessage = { sender: "ai", text: "An error occurred. Please try again later." };
-            
             // Set loading to false before updating the UI
             setLoading(false);
             
-            setChatLog((prevLog) => [...prevLog, errorMessage]);
+            const localizedErrorMessage = { sender: "ai", text: t('chat.errorMessage') };
+            setChatLog((prevLog) => [...prevLog, localizedErrorMessage]);
             
             // Only save error message if we have a valid conversation
             if (activeConversationId) {
-                await saveMessageToFirestore(errorMessage, activeConversationId);
+                await saveMessageToFirestore(localizedErrorMessage, activeConversationId);
             }
         }
         
@@ -543,7 +544,7 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
             );
             
             // Show success message
-            alert("Geri bildiriminiz başarıyla gönderildi. Teşekkür ederiz!");
+            alert(t('chat.feedbackSuccess'));
         } catch (error) {
             console.error("Error submitting feedback:", error);
             throw error; // Re-throw to let modal handle the error
@@ -621,7 +622,7 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
                             <button 
                                 className={`${styles.memoryButton} ${memoryEnabled ? styles.enabled : styles.disabled}`}
                                 onClick={toggleMemoryEnabled}
-                                title={memoryEnabled ? "Memory is enabled" : "Memory is disabled"}
+                                title={memoryEnabled ? t('chat.memoryEnabledTitle') : t('chat.memoryDisabledTitle')}
                                 type="button"
                             >
                                 {memoryEnabled ? "🧠" : "🧠"}
@@ -633,7 +634,7 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
                                     onClick={startNewConversation}
                                     type="button"
                                 >
-                                    Yeni Konuşma
+                                    {t('chat.newConversation')}
                                 </button>
                             )}
                         </div>
@@ -655,7 +656,7 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
                                             <button 
                                                 className={styles.feedbackButton}
                                                 onClick={() => handleFeedbackClick(msg.text, userMessage)}
-                                                title="Bu yanıt hakkında geri bildirim ver"
+                                                title={t('chat.feedbackButtonTitle')}
                                             >
                                                 💬
                                             </button>
@@ -664,28 +665,28 @@ If the user asks if you remember something: "Maalesef hafıza özelliğim şu an
                                 );
                             })}
                             {loading && <div className={styles.loadingMessage}>
-                                <p>Yazıyor...</p>
+                                <p>{t('chat.typing')}</p>
                             </div>}
                             <div ref={messagesEndRef} />
                         </div>
                     ) : (
                         <div className={styles.emptyChat}>
-                            <h2>TherapyAI'a Hoş Geldiniz</h2>
-                            <p>Duygusal destek ve zihinsel iyi oluş konusunda size yardımcı olmak için buradayım.</p>
-                            <p>Konuşmaya başlamak için bir mesaj gönderin veya sol menüden önceki bir konuşmayı seçin.</p>
+                            <h2>{t('chat.emptyTitle')}</h2>
+                            <p>{t('chat.emptyDesc1')}</p>
+                            <p>{t('chat.emptyDesc2')}</p>
                         </div>
                     )}
                     
                     <form onSubmit={handleSubmit} className={styles.chatForm}>
                         <input
                             type="text"
-                            placeholder="Mesaj yazın..."
+                            placeholder={t('chat.inputPlaceholder')}
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             className={styles.chatInput}
                         />
                         <button type="submit" className={styles.sendButton} disabled={loading}>
-                            {loading ? "Gönderiliyor..." : "Gönder"}
+                            {loading ? t('chat.sending') : t('chat.send')}
                         </button>
                     </form>
                 </div>

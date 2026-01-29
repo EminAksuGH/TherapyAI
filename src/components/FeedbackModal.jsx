@@ -1,32 +1,34 @@
 import React, { useState } from 'react';
 import styles from './FeedbackModal.module.css';
+import { useTranslation } from 'react-i18next';
 
 const FeedbackModal = ({ isOpen, onClose, onSubmit, aiMessage, userMessage }) => {
     const [selectedReason, setSelectedReason] = useState('');
     const [description, setDescription] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { t } = useTranslation();
 
     const feedbackReasons = [
-        { value: 'inappropriate', label: 'Uygunsuz İçerik' },
-        { value: 'not_enough', label: 'Yetersiz Yanıt' },
-        { value: 'incorrect', label: 'Yanlış Bilgi' },
-        { value: 'unhelpful', label: 'Yardımcı Değil' },
-        { value: 'too_generic', label: 'Çok Genel' },
-        { value: 'off_topic', label: 'Konuyla İlgisiz' },
-        { value: 'technical_issue', label: 'Teknik Sorun' },
-        { value: 'other', label: 'Diğer' }
+        { value: 'inappropriate', label: t('feedback.reasons.inappropriate') },
+        { value: 'not_enough', label: t('feedback.reasons.notEnough') },
+        { value: 'incorrect', label: t('feedback.reasons.incorrect') },
+        { value: 'unhelpful', label: t('feedback.reasons.unhelpful') },
+        { value: 'too_generic', label: t('feedback.reasons.tooGeneric') },
+        { value: 'off_topic', label: t('feedback.reasons.offTopic') },
+        { value: 'technical_issue', label: t('feedback.reasons.technical') },
+        { value: 'other', label: t('feedback.reasons.other') }
     ];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
         if (!selectedReason) {
-            alert('Lütfen bir sebep seçin.');
+            alert(t('feedback.reasonRequired'));
             return;
         }
 
         if (!description.trim()) {
-            alert('Lütfen açıklama yazın.');
+            alert(t('feedback.descriptionRequired'));
             return;
         }
 
@@ -46,7 +48,7 @@ const FeedbackModal = ({ isOpen, onClose, onSubmit, aiMessage, userMessage }) =>
             onClose();
         } catch (error) {
             console.error('Error submitting feedback:', error);
-            alert('Geri bildirim gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
+            alert(t('feedback.submitError'));
         } finally {
             setIsSubmitting(false);
         }
@@ -66,7 +68,7 @@ const FeedbackModal = ({ isOpen, onClose, onSubmit, aiMessage, userMessage }) =>
         <div className={styles.modalOverlay} onClick={handleClose}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.modalHeader}>
-                    <h3>AI Yanıtı Hakkında Geri Bildirim</h3>
+                    <h3>{t('feedback.title')}</h3>
                     <button 
                         className={styles.closeButton} 
                         onClick={handleClose}
@@ -78,18 +80,18 @@ const FeedbackModal = ({ isOpen, onClose, onSubmit, aiMessage, userMessage }) =>
                 
                 <div className={styles.messagePreview}>
                     <div className={styles.userMessagePreview}>
-                        <strong>Mesajınız:</strong>
+                        <strong>{t('feedback.userMessage')}</strong>
                         <p>"{userMessage?.length > 100 ? userMessage.substring(0, 100) + '...' : userMessage}"</p>
                     </div>
                     <div className={styles.aiMessagePreview}>
-                        <strong>AI Yanıtı:</strong>
+                        <strong>{t('feedback.aiMessage')}</strong>
                         <p>"{aiMessage?.length > 100 ? aiMessage.substring(0, 100) + '...' : aiMessage}"</p>
                     </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className={styles.feedbackForm}>
                     <div className={styles.reasonSection}>
-                        <label className={styles.sectionLabel}>Sorun türü nedir?</label>
+                        <label className={styles.sectionLabel}>{t('feedback.reasonLabel')}</label>
                         <div className={styles.reasonGrid}>
                             {feedbackReasons.map((reason) => (
                                 <label key={reason.value} className={styles.reasonOption}>
@@ -109,13 +111,13 @@ const FeedbackModal = ({ isOpen, onClose, onSubmit, aiMessage, userMessage }) =>
 
                     <div className={styles.descriptionSection}>
                         <label htmlFor="description" className={styles.sectionLabel}>
-                            Detaylı açıklama (zorunlu):
+                            {t('feedback.descriptionLabel')}
                         </label>
                         <textarea
                             id="description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Lütfen sorunu veya önerinizi detaylı olarak açıklayın..."
+                            placeholder={t('feedback.descriptionPlaceholder')}
                             className={styles.descriptionTextarea}
                             rows={4}
                             disabled={isSubmitting}
@@ -133,14 +135,14 @@ const FeedbackModal = ({ isOpen, onClose, onSubmit, aiMessage, userMessage }) =>
                             className={styles.cancelButton}
                             disabled={isSubmitting}
                         >
-                            İptal
+                            {t('feedback.cancel')}
                         </button>
                         <button 
                             type="submit" 
                             className={styles.submitButton}
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Gönderiliyor...' : 'Geri Bildirim Gönder'}
+                            {isSubmitting ? t('feedback.submitting') : t('feedback.submit')}
                         </button>
                     </div>
                 </form>

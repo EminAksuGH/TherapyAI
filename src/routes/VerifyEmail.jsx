@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { applyActionCode, getAuth, reload } from 'firebase/auth';
 import AuthRedirect from '../components/AuthRedirect';
 import styles from './Auth.module.css';
+import { useTranslation } from 'react-i18next';
 
 const VerifyEmail = () => {
   const [verificationState, setVerificationState] = useState({
@@ -13,6 +14,7 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = getAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -28,7 +30,7 @@ const VerifyEmail = () => {
       setVerificationState({
         isVerifying: false,
         isSuccess: false,
-        error: 'Geçersiz veya süresi dolmuş doğrulama bağlantısı.'
+        error: t('auth.messages.invalidVerificationLink')
       });
       return;
     }
@@ -57,7 +59,7 @@ const VerifyEmail = () => {
         setVerificationState({
           isVerifying: false,
           isSuccess: false,
-          error: 'E-posta doğrulama işlemi başarısız oldu. Bağlantı geçersiz veya süresi dolmuş olabilir.'
+          error: t('auth.messages.verifyFailed')
         });
       }
     };
@@ -75,18 +77,18 @@ const VerifyEmail = () => {
     <AuthRedirect requireEmailVerification={true}>
       <div className={styles.authContainer}>
         <div className={styles.authForm}>
-          <h2>E-posta Doğrulama</h2>
+          <h2>{t('auth.titles.verifyEmail')}</h2>
         
         {verificationState.isVerifying && (
           <div className={styles.loadingContainer}>
             <div className={styles.loadingSpinner}></div>
-            <p>E-posta adresiniz doğrulanıyor...</p>
+            <p>{t('auth.messages.verifyInProgress')}</p>
           </div>
         )}
         
         {!verificationState.isVerifying && verificationState.isSuccess && (
           <div className={styles.success}>
-            E-posta adresiniz başarıyla doğrulandı! 5 saniye içinde giriş sayfasına yönlendirileceksiniz.
+            {t('auth.messages.verifySuccess')}
           </div>
         )}
         
@@ -97,7 +99,7 @@ const VerifyEmail = () => {
         )}
         
         <div className={styles.authLinks}>
-          <Link to="/login">Giriş sayfasına dön</Link>
+          <Link to="/login">{t('auth.links.backToLogin')}</Link>
         </div>
         </div>
       </div>

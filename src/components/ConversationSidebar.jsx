@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { collection, query, where, orderBy, getDocs, doc, deleteDoc, writeBatch, onSnapshot, limit, startAfter } from 'firebase/firestore';
 import { decryptMessage } from '../firebase/encryptionService';
 import styles from './ConversationSidebar.module.css';
+import { useTranslation } from 'react-i18next';
 
 const ConversationSidebar = ({ onSelectConversation, currentConversationId, onClose }) => {
     const [conversations, setConversations] = useState([]);
@@ -14,12 +15,13 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
     const { currentUser } = useAuth();
     const sidebarRef = useRef(null);
     const CONVERSATIONS_PER_PAGE = 15;
+    const { t, i18n } = useTranslation();
 
     // Helper function to decrypt conversation titles
     const decryptConversationTitles = async (conversations) => {
         const decryptedConversations = [];
         for (const conversation of conversations) {
-            const decryptedTitle = conversation.title ? await decryptMessage(conversation.title) : 'Yeni Konuşma';
+            const decryptedTitle = conversation.title ? await decryptMessage(conversation.title) : t('conversation.newConversation');
             decryptedConversations.push({
                 ...conversation,
                 title: decryptedTitle
@@ -143,7 +145,7 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
 
     const handleDeleteConversation = async (e, conversationId) => {
         e.stopPropagation();
-        if (!window.confirm('Bu konuşmayı silmek istediğinizden emin misiniz?')) {
+        if (!window.confirm(t('conversation.deleteConfirm'))) {
             return;
         }
 
@@ -186,7 +188,7 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
             }
         } catch (error) {
             console.error('Error deleting conversation:', error);
-            alert('Konuşmayı silerken bir hata oluştu. Lütfen tekrar deneyin.');
+            alert(t('conversation.deleteError'));
         }
     };
 
@@ -196,20 +198,21 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
         const now = new Date();
         const diffInMs = now.getTime() - date.getTime();
         const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+        const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
         
         // Handle negative differences (future dates due to server/client time sync issues)
         if (diffInMs < 0 || diffInDays < 0) {
-            return 'Bugün'; // Treat future dates as "today" to avoid "-1 gün önce"
+            return t('conversation.today'); // Treat future dates as "today" to avoid "-1 days ago"
         }
         
         if (diffInDays === 0) {
-            return 'Bugün';
+            return t('conversation.today');
         } else if (diffInDays === 1) {
-            return 'Dün';
+            return t('conversation.yesterday');
         } else if (diffInDays < 7) {
-            return `${diffInDays} gün önce`;
+            return t('conversation.daysAgo', { count: diffInDays });
         } else {
-            return date.toLocaleDateString('tr-TR', { 
+            return date.toLocaleDateString(locale, { 
                 day: 'numeric', 
                 month: 'short'
             });
@@ -223,22 +226,22 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
     return (
         <div className={styles.sidebar} ref={sidebarRef}>
             <div className={styles.sidebarHeader}>
-                <h3>Konuşmalarım</h3>
+                <h3>{t('conversation.title')}</h3>
                 <button 
                     className={styles.closeButton} 
                     onClick={onClose}
-                    aria-label="Kapat"
+                    aria-label={t('conversation.close')}
                 >
                     ×
                 </button>
             </div>
             
             {loading ? (
-                <div className={styles.loading}>Yükleniyor...</div>
+                <div className={styles.loading}>{t('conversation.loading')}</div>
             ) : conversations.length === 0 ? (
                 <div className={styles.noConversations}>
-                    <p>Henüz konuşma bulunmuyor.</p>
-                    <p className={styles.startNewHint}>Yeni bir konuşma başlatmak için mesaj gönderin.</p>
+                    <p>{t('conversation.noConversations')}</p>
+                    <p className={styles.startNewHint}>{t('conversation.startNewHint')}</p>
                 </div>
             ) : (
                 <div className={styles.conversationList}>
@@ -249,13 +252,13 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
                             onClick={() => onSelectConversation(conversation.id)}
                         >
                             <div className={styles.conversationInfo}>
-                                <div className={styles.title}>{conversation.title || 'Yeni Konuşma'}</div>
+                                <div className={styles.title}>{conversation.title || t('conversation.newConversation')}</div>
                                 <div className={styles.date}>{formatDate(conversation.updatedAt)}</div>
                             </div>
                             <button 
                                 className={styles.deleteButton}
                                 onClick={(e) => handleDeleteConversation(e, conversation.id)}
-                                aria-label="Konuşmayı Sil"
+                                aria-label={t('conversation.deleteAria')}
                             >
                                 ×
                             </button>
@@ -263,7 +266,7 @@ const ConversationSidebar = ({ onSelectConversation, currentConversationId, onCl
                     ))}
                     
                     {loadingMore && (
-                        <div className={styles.loadingMore}>Daha fazla yükleniyor...</div>
+                        <div className={styles.loadingMore}>{t('conversation.loadingMore')}</div>
                     )}
                 </div>
             )}

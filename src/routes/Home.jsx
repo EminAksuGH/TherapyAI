@@ -4,9 +4,11 @@ import styles from './Home.module.css';
 import { motion } from 'framer-motion';
 import { FaHeartbeat, FaBrain, FaUserFriends } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const Home = () => {
     const { currentUser } = useAuth();
+    const { t } = useTranslation();
     
     return (
         <section className={styles.homeContainer}>
@@ -17,7 +19,7 @@ const Home = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7 }}
                 >
-                    TherapyAI'a Hoş Geldiniz
+                    {t('home.title')}
                 </motion.h1>
                 
                 <motion.p 
@@ -26,8 +28,7 @@ const Home = () => {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.7, delay: 0.3 }}
                 >
-                    Gelişmiş yapay zeka ve şefkatli bakımın buluştuğu destekleyici bir alan keşfedin.
-                    Daha iyi bir ruh sağlığına giden yolculuğunuz burada başlıyor.
+                    {t('home.lead')}
                 </motion.p>
                 
                 <motion.div 
@@ -38,7 +39,7 @@ const Home = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 >
-                    <Link to="/chat">Seansınızı Başlatın</Link>
+                    <Link to="/chat">{t('home.cta')}</Link>
                 </motion.div>
             </div>
             
@@ -59,15 +60,15 @@ const Home = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 1.2 }}
             >
-                <h2>Nasıl Yardımcı Olabiliriz</h2>
+                <h2>{t('home.helpTitle')}</h2>
                 <div className={styles.featureCards}>
                     <motion.div 
                         className={styles.featureCard}
                         whileHover={{ y: -10, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                     >
                         <FaHeartbeat className={styles.featureIcon} />
-                        <h3>Duygusal Destek</h3>
-                        <p>Hayatın zorluklarını güvenle aşmanıza yardımcı olacak 7/24 rehberlik.</p>
+                        <h3>{t('home.emotionalTitle')}</h3>
+                        <p>{t('home.emotionalDesc')}</p>
                     </motion.div>
                     
                     <motion.div 
@@ -75,8 +76,8 @@ const Home = () => {
                         whileHover={{ y: -10, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                     >
                         <FaBrain className={styles.featureIcon} />
-                        <h3>Bilişsel Teknikler</h3>
-                        <p>Düşünceleri yeniden şekillendirmek ve zihinsel refahı artırmak için pratik beceriler öğrenin.</p>
+                        <h3>{t('home.cognitiveTitle')}</h3>
+                        <p>{t('home.cognitiveDesc')}</p>
                     </motion.div>
                     
                     <motion.div 
@@ -84,8 +85,8 @@ const Home = () => {
                         whileHover={{ y: -10, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
                     >
                         <FaUserFriends className={styles.featureIcon} />
-                        <h3>Kişiselleştirilmiş Yaklaşım</h3>
-                        <p>Benzersiz ihtiyaç ve tercihlerinize göre uyarlanmış yapay zeka destekli rehberlik.</p>
+                        <h3>{t('home.personalTitle')}</h3>
+                        <p>{t('home.personalDesc')}</p>
                     </motion.div>
                 </div>
             </motion.div>

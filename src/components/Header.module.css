@@ -126,6 +126,23 @@
     align-items: center;
     gap: 12px;
 }
+
+.languageToggle {
+    background: transparent;
+    border: 1px solid var(--button-bg);
+    color: var(--text-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.languageToggle:hover {
+    border-color: var(--primary-link-hover);
+    color: var(--primary-link-hover);
+}
     
 .themeToggle {
     background: none;

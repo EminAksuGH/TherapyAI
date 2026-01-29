@@ -7,6 +7,7 @@ import { db } from '../firebase/firebase';
 import AuthRedirect from '../components/AuthRedirect';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from './Auth.module.css';
+import { useTranslation } from 'react-i18next';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { signup, verifyEmail } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Add effect to set auth-page class on body
   useEffect(() => {
@@ -51,15 +53,15 @@ const Signup = () => {
     // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      return setError('Lütfen e-posta adresine bir \'@\' ekleyin');
+      return setError(t('auth.messages.invalidEmail'));
     }
     
     if (formData.password !== formData.confirmPassword) {
-      return setError('Parolalar eşleşmiyor');
+      return setError(t('auth.messages.passwordMismatch'));
     }
 
     if (formData.password.length < 6) {
-      return setError('Parola en az 6 karakter olmalıdır');
+      return setError(t('auth.messages.passwordMinLength'));
     }
 
     try {
@@ -103,7 +105,7 @@ const Signup = () => {
         }
       }
       
-      setMessage('Hesabınız oluşturuldu! Lütfen e-posta adresinizi doğrulamak için gönderdiğimiz bağlantıya tıklayın.');
+      setMessage(t('auth.messages.signupSuccess'));
       
       // Navigate to login after 5 seconds
       setTimeout(() => {
@@ -114,15 +116,15 @@ const Signup = () => {
       
       // Create more concise error message
       if (err.code === 'auth/email-already-in-use') {
-        setError('Bu e-posta adresi zaten kullanımda');
+        setError(t('auth.messages.emailInUse'));
       } else if (err.code === 'auth/invalid-email') {
-        setError('Lütfen e-posta adresine bir \'@\' ekleyin');
+        setError(t('auth.messages.invalidEmail'));
       } else if (err.code === 'auth/weak-password') {
-        setError('Parola çok zayıf');
+        setError(t('auth.messages.weakPassword'));
       } else if (err.code === 'auth/network-request-failed') {
-        setError('Ağ hatası. İnternet bağlantınızı kontrol edin.');
+        setError(t('auth.messages.networkError'));
       } else {
-        setError(`Hesap oluşturma başarısız oldu: ${err.code || err.message}`);
+        setError(t('auth.messages.signupFailed', { error: err.code || err.message }));
       }
     } finally {
       setLoading(false);
@@ -133,26 +135,27 @@ const Signup = () => {
     <AuthRedirect requireEmailVerification={true}>
       <div className={styles.authContainer}>
         <div className={styles.authForm}>
-          <h2>Hesap Oluştur</h2>
+          <h2>{t('auth.titles.signup')}</h2>
           {error && <div className={styles.error}>{error}</div>}
           {message && <div className={styles.success}>{message}</div>}
         
         {!message ? (
           <form onSubmit={handleSubmit}>
             <div className={styles.formGroup}>
-              <label htmlFor="name">Ad Soyad</label>
+              <label htmlFor="name">{t('auth.labels.name')}</label>
               <input
                 type="text"
                 id="name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                placeholder={t('auth.placeholders.fullName')}
                 required
               />
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="email">E-posta</label>
+              <label htmlFor="email">{t('auth.labels.email')}</label>
               <input
                 type="email"
                 id="email"
@@ -164,7 +167,7 @@ const Signup = () => {
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="password">Parola</label>
+              <label htmlFor="password">{t('auth.labels.password')}</label>
               <div className={styles.passwordInputContainer}>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -178,7 +181,7 @@ const Signup = () => {
                   type="button"
                   className={styles.passwordToggle}
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                  aria-label={showPassword ? t('auth.showHide.hidePassword') : t('auth.showHide.showPassword')}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
@@ -186,7 +189,7 @@ const Signup = () => {
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="confirmPassword">Parolayı Onaylayın</label>
+              <label htmlFor="confirmPassword">{t('auth.labels.confirmPassword')}</label>
               <div className={styles.passwordInputContainer}>
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -200,7 +203,7 @@ const Signup = () => {
                   type="button"
                   className={styles.passwordToggle}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                  aria-label={showConfirmPassword ? t('auth.showHide.hidePassword') : t('auth.showHide.showPassword')}
                 >
                   {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
@@ -212,18 +215,18 @@ const Signup = () => {
               className={styles.authButton}
               disabled={loading}
             >
-              {loading ? 'Hesap oluşturuluyor...' : 'Kayıt Ol'}
+              {loading ? t('auth.actions.signupLoading') : t('auth.actions.signup')}
             </button>
           </form>
         ) : (
           <div className={styles.authLinks}>
-            <Link to="/login">Giriş sayfasına dön</Link>
+            <Link to="/login">{t('auth.links.backToLogin')}</Link>
           </div>
         )}
         
         {!message && (
           <div className={styles.authLinks}>
-            Zaten bir hesabınız var mı? <Link to="/login">Giriş Yap</Link>
+            {t('auth.links.haveAccount')} <Link to="/login">{t('auth.links.login')}</Link>
           </div>
         )}
         </div>

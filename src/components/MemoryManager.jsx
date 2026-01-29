@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMemory } from '../context/MemoryContext';
 import styles from './MemoryManager.module.css';
+import { useTranslation } from 'react-i18next';
 
 const MemoryManager = () => {
   const { 
@@ -17,6 +18,7 @@ const MemoryManager = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState('recent');
   const [isDeleting, setIsDeleting] = useState(false);
+  const { t, i18n } = useTranslation();
   
   // Display memories based on the active tab
   const displayMemories = activeTab === 'recent' 
@@ -66,26 +68,27 @@ const MemoryManager = () => {
   
   // Format timestamp from Firestore to readable date
   const formatTimestamp = (timestamp) => {
-    if (!timestamp) return 'Bilinmeyen tarih';
+    if (!timestamp) return t('memory.unknownDate');
+    const locale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
     
     // Firestore timestamp has seconds and nanoseconds
     if (timestamp.seconds) {
       const date = new Date(timestamp.seconds * 1000);
-      return date.toLocaleString();
+      return date.toLocaleString(locale);
     }
     
     // Regular date object
     if (timestamp instanceof Date) {
-      return timestamp.toLocaleString();
+      return timestamp.toLocaleString(locale);
     }
     
-    return 'Geçersiz tarih';
+    return t('memory.invalidDate');
   };
   
   return (
     <div className={styles.memoryManager}>
       <div className={styles.memoryHeader}>
-        <h2>Hafıza Yöneticisi</h2>
+        <h2>{t('memory.managerTitle')}</h2>
         <div className={styles.memoryToggle}>
           <label className={styles.toggleSwitch}>
             <input 
@@ -95,7 +98,7 @@ const MemoryManager = () => {
             />
             <span className={styles.toggleSlider}></span>
           </label>
-          <span>{memoryEnabled ? 'Hafıza Etkin' : 'Hafıza Devre Dışı'}</span>
+          <span>{memoryEnabled ? t('memory.enabled') : t('memory.disabled')}</span>
         </div>
       </div>
       
@@ -103,7 +106,7 @@ const MemoryManager = () => {
         <form onSubmit={handleSearch}>
           <input
             type="text"
-            placeholder="Hafızada ara..."
+            placeholder={t('memory.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={styles.searchInput}
@@ -114,7 +117,7 @@ const MemoryManager = () => {
             className={styles.searchButton}
             disabled={isSearching || !memoryEnabled}
           >
-            {isSearching ? 'Aranıyor...' : 'Ara'}
+            {isSearching ? t('memory.searchLoading') : t('memory.searchButton')}
           </button>
         </form>
       </div>
@@ -125,14 +128,14 @@ const MemoryManager = () => {
           onClick={() => setActiveTab('recent')}
           disabled={!memoryEnabled}
         >
-          Son Eklenenler
+          {t('memory.tabRecent')}
         </button>
         <button 
           className={`${styles.tabButton} ${activeTab === 'important' ? styles.active : ''}`}
           onClick={() => setActiveTab('important')}
           disabled={!memoryEnabled}
         >
-          Önemli
+          {t('memory.tabImportant')}
         </button>
         {searchResults.length > 0 && (
           <button 
@@ -140,7 +143,7 @@ const MemoryManager = () => {
             onClick={() => setActiveTab('search')}
             disabled={!memoryEnabled}
           >
-            Arama Sonuçları
+            {t('memory.tabSearch')}
           </button>
         )}
       </div>
@@ -148,14 +151,14 @@ const MemoryManager = () => {
       <div className={styles.memoriesList}>
         {!memoryEnabled ? (
           <div className={styles.memoryDisabled}>
-            <p>Hafıza özelliği şu anda devre dışı.</p>
-            <p>Saklanan hafızaları görüntülemek, aramak ve yönetmek için hafızayı etkinleştirin.</p>
+            <p>{t('memory.disabledTitle')}</p>
+            <p>{t('memory.disabledHint')}</p>
           </div>
         ) : displayMemories.length === 0 ? (
           <div className={styles.emptyState}>
             {activeTab === 'search' 
-              ? 'Arama sonucu bulunamadı.' 
-              : 'Henüz hafıza kayıtlı değil.'}
+              ? t('memory.noSearchResults') 
+              : t('memory.noMemories')}
           </div>
         ) : (
           displayMemories.map(memory => (
@@ -163,7 +166,7 @@ const MemoryManager = () => {
               <div className={styles.memoryHeader}>
                 <span className={styles.memoryTopic}>{memory.topic}</span>
                 <span className={styles.memoryImportance}>
-                  Önem: {memory.importance}/10
+                  {t('memory.importance')}: {memory.importance}/10
                 </span>
               </div>
               <div className={styles.memoryContent}>
@@ -171,25 +174,25 @@ const MemoryManager = () => {
               </div>
               {memory.reasoning && (
                 <div className={styles.memoryReasoning}>
-                  <span className={styles.reasoningLabel}>Neden önemli:</span>
+                  <span className={styles.reasoningLabel}>{t('memory.reasonLabel')}</span>
                   {memory.reasoning}
                 </div>
               )}
               <div className={styles.memoryFooter}>
                 <span className={styles.memoryDate}>
-                  Oluşturulma: {formatTimestamp(memory.createdAt)}
+                  {t('memory.createdAt')}: {formatTimestamp(memory.createdAt)}
                 </span>
                 <div className={styles.memoryControls}>
                   {memory.recallCount > 0 && (
                     <span className={styles.memoryRecalls}>
-                      {memory.recallCount} kez hatırlandı
+                      {t('memory.recallCount', { count: memory.recallCount })}
                     </span>
                   )}
                   <button 
                     className={styles.deleteButton}
                     onClick={() => handleDeleteMemory(memory.id)}
                     disabled={isDeleting}
-                    title="Bu hafızayı sil"
+                    title={t('memory.deleteTitle')}
                   >
                     ×
                   </button>

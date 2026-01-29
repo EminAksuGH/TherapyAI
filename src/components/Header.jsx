@@ -1,9 +1,11 @@
 ﻿import { useContext, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styles from './Header.module.css';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useAuth } from '../context/AuthContext';
 import { FaSun, FaMoon, FaUser, FaEdit, FaSignOutAlt, FaHome, FaHeadset, FaBrain, FaHeart, FaTrash } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
+import { getLocaleFromPath, buildLocaleUrl } from '../i18n';
 
 // Function to check if a path is protected
 const isProtectedPath = (path) => {
@@ -13,12 +15,16 @@ const isProtectedPath = (path) => {
 const Header = () => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [currentLocale, setCurrentLocale] = useState('en');
+    const [switchHref, setSwitchHref] = useState('');
+    const { t } = useTranslation();
     const navRef = useRef(null);
     const hamburgerRef = useRef(null);
     const dropdownRef = useRef(null);
     const { theme, toggleTheme } = useContext(ThemeContext);
     const { currentUser, logout, reloadUser } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     // Reset dropdown when currentUser changes
     useEffect(() => {
@@ -112,6 +118,19 @@ const Header = () => {
         };
     }, [menuOpen]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const locale = getLocaleFromPath(window.location.pathname);
+        const targetLocale = locale === 'tr' ? 'en' : 'tr';
+        setCurrentLocale(locale);
+        setSwitchHref(buildLocaleUrl(
+            window.location.pathname,
+            window.location.search,
+            window.location.hash,
+            targetLocale
+        ));
+    }, [location.pathname, location.search, location.hash]);
+
     return (
         <header className={styles.header}>
             <div className={styles.logo} onClick={() => navigate('/')} style={{cursor: 'pointer'}}>TherapyAI</div>
@@ -124,7 +143,7 @@ const Header = () => {
                     onClick={() => setMenuOpen(false)} 
                     style={{"--item-index": 0}}
                 >
-                    <FaHome className={styles.menuIcon} /> Ana Sayfa
+                    <FaHome className={styles.menuIcon} /> {t('nav.home')}
                 </Link>
                 <Link 
                     to="/chat" 
@@ -134,7 +153,7 @@ const Header = () => {
                     }}
                     style={{"--item-index": 1}}
                 >
-                    <FaHeart className={styles.menuIcon} /> Duygusal Destek
+                    <FaHeart className={styles.menuIcon} /> {t('nav.support')}
                 </Link>
                 
                 {/* Giriş Yap/Profil link in hamburger menu */}
@@ -148,7 +167,7 @@ const Header = () => {
                             style={{"--item-index": 2}}
                             className={styles.mobileOnly}
                         >
-                            <FaBrain className={styles.menuIcon} /> Hafıza Listesi
+                            <FaBrain className={styles.menuIcon} /> {t('nav.memoryList')}
                         </Link>
                         <Link to="/edit-profile" 
                             onClick={(e) => {
@@ -158,7 +177,7 @@ const Header = () => {
                             style={{"--item-index": 3}}
                             className={styles.mobileOnly}
                         >
-                            <FaEdit className={styles.menuIcon} /> Profili Düzenle
+                            <FaEdit className={styles.menuIcon} /> {t('nav.editProfile')}
                         </Link>
                         <Link to="/clear-data" 
                             onClick={(e) => {
@@ -168,7 +187,7 @@ const Header = () => {
                             style={{"--item-index": 4}}
                             className={styles.mobileOnly}
                         >
-                            <FaTrash className={styles.menuIcon} /> Geçmişi Temizle
+                            <FaTrash className={styles.menuIcon} /> {t('nav.clearData')}
                         </Link>
                         <Link to="/" 
                             onClick={(e) => {
@@ -179,7 +198,7 @@ const Header = () => {
                             style={{"--item-index": 5}}
                             className={`${styles.mobileOnly} ${styles.logoutLink}`}
                         >
-                            <FaSignOutAlt className={styles.menuIcon} /> Çıkış Yap
+                            <FaSignOutAlt className={styles.menuIcon} /> {t('nav.logout')}
                         </Link>
                     </>
                 ) : (
@@ -188,12 +207,28 @@ const Header = () => {
                         style={{"--item-index": 2}}
                         className={styles.mobileOnly}
                     >
-                        <FaUser className={styles.menuIcon} /> Giriş Yap
+                        <FaUser className={styles.menuIcon} /> {t('nav.login')}
                     </Link>
                 )}
             </nav>
 
             <div className={styles.actions}>
+                <button
+                    type="button"
+                    className={styles.languageToggle}
+                    onClick={() => {
+                        if (switchHref) {
+                            const nextLocale = currentLocale === 'tr' ? 'en' : 'tr';
+                            document.cookie = `locale=${nextLocale}; path=/; max-age=31536000`;
+                            // Use replace to avoid creating history entry
+                            window.location.replace(switchHref);
+                        }
+                    }}
+                    title={currentLocale === 'tr' ? t('language.switchToEnglish') : t('language.switchToTurkish')}
+                    aria-label={currentLocale === 'tr' ? t('language.switchToEnglish') : t('language.switchToTurkish')}
+                >
+                    {currentLocale === 'tr' ? 'EN' : 'TR'}
+                </button>
                 <button onClick={toggleTheme} className={styles.themeToggle}>
                     {theme === 'light' ? <FaMoon /> : <FaSun />}
                 </button>
@@ -215,7 +250,7 @@ const Header = () => {
                                         handleProtectedNavigation(e, '/memory-list');
                                     }}
                                 >
-                                    <FaBrain /> Hafıza Listesi
+                                    <FaBrain /> {t('nav.memoryList')}
                                 </div>
                                 <div 
                                     className={styles.dropdownItem}
@@ -224,7 +259,7 @@ const Header = () => {
                                         handleProtectedNavigation(e, '/edit-profile');
                                     }}
                                 >
-                                    <FaEdit /> Profili Düzenle
+                                    <FaEdit /> {t('nav.editProfile')}
                                 </div>
                                 <div 
                                     className={styles.dropdownItemDanger}
@@ -233,14 +268,14 @@ const Header = () => {
                                         handleProtectedNavigation(e, '/clear-data');
                                     }}
                                 >
-                                    <FaTrash /> Geçmişi Temizle
+                                    <FaTrash /> {t('nav.clearData')}
                                 </div>
                                 <div className={styles.dropdownDivider}></div>
                                 <div 
                                     className={styles.dropdownItem}
                                     onClick={handleLogout}
                                 >
-                                    <FaSignOutAlt /> Çıkış Yap
+                                    <FaSignOutAlt /> {t('nav.logout')}
                                 </div>
                             </div>
                         )}
@@ -248,7 +283,7 @@ const Header = () => {
                 ) : (
                     <div className={styles.authLinks}>
                         <Link to="/login" className={styles.loginLink}>
-                            Giriş yap
+                            {t('nav.loginLower')}
                         </Link>
                     </div>
                 )}

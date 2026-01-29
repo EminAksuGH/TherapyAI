@@ -5,6 +5,7 @@ import { auth } from '../firebase/firebase';
 import AuthRedirect from '../components/AuthRedirect';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import styles from './Auth.module.css';
+import { useTranslation } from 'react-i18next';
 
 const ChangePassword = () => {
   const [password, setPassword] = useState('');
@@ -17,6 +18,7 @@ const ChangePassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // URL parametrelerinden oobCode (eylem kodu) al
   const queryParams = new URLSearchParams(location.search);
@@ -25,7 +27,7 @@ const ChangePassword = () => {
   useEffect(() => {
     // Eğer oobCode yoksa, bu sayfaya yanlış erişilmiş
     if (!oobCode) {
-      setError('Geçersiz şifre sıfırlama bağlantısı. Lütfen yeni bir şifre sıfırlama bağlantısı isteyin.');
+      setError(t('auth.messages.invalidResetLink'));
       // Kullanıcıya hatayı görmesi için kısa bir süre ver, sonra yönlendir
       setTimeout(() => {
         setShouldRedirect(true);
@@ -43,11 +45,11 @@ const ChangePassword = () => {
 
     // Şifreleri doğrula
     if (!validatePassword(password)) {
-      return setError('Şifre en az 6 karakter olmalıdır');
+      return setError(t('auth.messages.passwordMinLength'));
     }
 
     if (password !== confirmPassword) {
-      return setError('Şifreler eşleşmiyor');
+      return setError(t('auth.messages.passwordMismatch'));
     }
 
     try {
@@ -57,7 +59,7 @@ const ChangePassword = () => {
       // Firebase ile şifre sıfırlamayı onayla
       await confirmPasswordReset(auth, oobCode, password);
       
-      setMessage('Şifreniz başarıyla güncellendi. Giriş sayfasına yönlendiriliyorsunuz...');
+      setMessage(t('auth.messages.resetSuccess'));
       
       // 3 saniye sonra giriş sayfasına yönlendir
       setTimeout(() => {
@@ -66,15 +68,15 @@ const ChangePassword = () => {
     } catch (err) {
       console.error('Error updating password:', err);
       if (err.code === 'auth/invalid-action-code' || err.code === 'auth/expired-action-code') {
-        setError('Bu şifre sıfırlama bağlantısının süresi dolmuş veya geçersiz. Lütfen yeni bir bağlantı isteyin.');
+        setError(t('auth.messages.expiredResetLink'));
         // Kullanıcıya hatayı görmesi için kısa bir süre ver, sonra yönlendir
         setTimeout(() => {
           setShouldRedirect(true);
         }, 3000);
       } else if (err.code === 'auth/weak-password') {
-        setError('Şifre en az 6 karakter olmalıdır');
+        setError(t('auth.messages.passwordMinLength'));
       } else {
-        setError('Şifre sıfırlama başarısız oldu. Lütfen tekrar deneyin.');
+        setError(t('auth.messages.resetFailed'));
       }
     } finally {
       setLoading(false);
@@ -90,14 +92,14 @@ const ChangePassword = () => {
     <AuthRedirect allowOobCode>
       <div className={styles.authContainer}>
         <div className={styles.authForm}>
-                  <h2>Yeni Şifre Belirle</h2>
+                  <h2>{t('auth.titles.changePassword')}</h2>
         {error && <div className={styles.error}>{error}</div>}
         {message && <div className={styles.success}>{message}</div>}
         
-        {!error || error.includes('Şifre en az') || error.includes('Şifreler eşleşmiyor') ? (
+        {!error || error === t('auth.messages.passwordMinLength') || error === t('auth.messages.passwordMismatch') ? (
           <form onSubmit={handleSubmit}>
             <div className={styles.formGroup}>
-              <label htmlFor="password">Yeni Şifre</label>
+              <label htmlFor="password">{t('auth.labels.newPassword')}</label>
               <div className={styles.passwordInputContainer}>
                 <input
                   type={showPassword ? "text" : "password"}
@@ -105,7 +107,7 @@ const ChangePassword = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading || message}
-                  placeholder="En az 6 karakter"
+                  placeholder={t('auth.placeholders.passwordMin6')}
                   required
                   minLength={6}
                 />
@@ -114,7 +116,7 @@ const ChangePassword = () => {
                   className={styles.passwordToggle}
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loading || message}
-                  aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                  aria-label={showPassword ? t('auth.showHide.hidePassword') : t('auth.showHide.showPassword')}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
@@ -122,7 +124,7 @@ const ChangePassword = () => {
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="confirmPassword">Şifreyi Onayla</label>
+              <label htmlFor="confirmPassword">{t('auth.labels.confirmPassword')}</label>
               <div className={styles.passwordInputContainer}>
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -130,7 +132,7 @@ const ChangePassword = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={loading || message}
-                  placeholder="Yeni şifrenizi tekrar girin"
+                  placeholder={t('auth.placeholders.confirmNewPassword')}
                   required
                   minLength={6}
                 />
@@ -139,7 +141,7 @@ const ChangePassword = () => {
                   className={styles.passwordToggle}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={loading || message}
-                  aria-label={showConfirmPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                  aria-label={showConfirmPassword ? t('auth.showHide.hidePassword') : t('auth.showHide.showPassword')}
                 >
                   {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
@@ -151,12 +153,12 @@ const ChangePassword = () => {
               className={styles.authButton}
               disabled={loading || message || !oobCode}
             >
-              {loading ? 'Güncelleniyor...' : 'Şifreyi Güncelle'}
+              {loading ? t('auth.actions.updatePasswordLoading') : t('auth.actions.updatePassword')}
             </button>
           </form>
         ) : (
           <div className={styles.authLinks}>
-            <a href="/forgot-password">Yeni sıfırlama bağlantısı iste</a>
+            <a href="/forgot-password">{t('auth.links.requestResetLink')}</a>
           </div>
         )}
         </div>

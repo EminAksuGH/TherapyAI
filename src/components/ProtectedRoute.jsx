@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const ProtectedRoute = () => {
   const { currentUser, reloadUser } = useAuth();
   const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
+  const { t } = useTranslation();
   
   // Reload current user to make sure we have the latest emailVerified status
   useEffect(() => {
@@ -34,7 +36,7 @@ const ProtectedRoute = () => {
       alignItems: 'center', 
       minHeight: '200px' 
     }}>
-      Yükleniyor...
+      {t('common.loading')}
     </div>;
   }
   
