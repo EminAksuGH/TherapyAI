@@ -149,7 +149,9 @@ const resources = {
           expiredResetLink: 'Bu şifre sıfırlama bağlantısının süresi dolmuş veya geçersiz. Lütfen yeni bir bağlantı isteyin.',
           resetSuccess: 'Şifreniz başarıyla güncellendi. Giriş sayfasına yönlendiriliyorsunuz...',
           verifyInProgress: 'E-posta adresiniz doğrulanıyor...',
-          verifySuccess: 'E-posta adresiniz başarıyla doğrulandı! 5 saniye içinde giriş sayfasına yönlendirileceksiniz.',
+          verifySuccess: 'E-posta adresiniz başarıyla doğrulandı!',
+          redirectingToApp: 'Uygulamaya yönlendiriliyorsunuz...',
+          redirectingToLogin: 'Giriş sayfasına yönlendiriliyorsunuz...',
           verifyFailed: 'E-posta doğrulama işlemi başarısız oldu. Bağlantı geçersiz veya süresi dolmuş olabilir.'
         },
         verification: {
@@ -438,7 +440,9 @@ const resources = {
           expiredResetLink: 'This reset link is expired or invalid. Please request a new link.',
           resetSuccess: 'Your password was updated successfully. Redirecting to login...',
           verifyInProgress: 'Verifying your email...',
-          verifySuccess: 'Your email has been verified! You will be redirected to login in 5 seconds.',
+          verifySuccess: 'Your email has been verified!',
+          redirectingToApp: 'Redirecting to app...',
+          redirectingToLogin: 'Redirecting to login...',
           verifyFailed: 'Email verification failed. The link may be invalid or expired.'
         },
         verification: {

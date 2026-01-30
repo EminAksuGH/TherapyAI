@@ -113,11 +113,12 @@ const VerifyEmail = () => {
         {!verificationState.isVerifying && verificationState.isSuccess && (
           <div className={styles.success}>
             {t('auth.messages.verifySuccess')}
-            {currentUser && (
-              <p style={{ marginTop: '10px', fontSize: '0.9em' }}>
-                {t('auth.messages.redirectingToApp') || 'Redirecting to app...'}
-              </p>
-            )}
+            <p style={{ marginTop: '10px', fontSize: '0.9em' }}>
+              {currentUser 
+                ? t('auth.messages.redirectingToApp')
+                : t('auth.messages.redirectingToLogin')
+              }
+            </p>
           </div>
         )}
         
