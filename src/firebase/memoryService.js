@@ -592,7 +592,6 @@ export const analyzeMemoryImportance = async (conversationText, previousContext 
             const similarityCheck = await checkMemorySimilarity(jsonData.extractedMemory, existingMemories);
             
             if (similarityCheck.isDuplicate) {
-                console.log(`Duplicate detected: ${similarityCheck.reasoning}`);
                 jsonData.shouldStore = false;
                 jsonData.isDuplicate = true;
                 jsonData.similarMemory = similarityCheck.similarMemory;
