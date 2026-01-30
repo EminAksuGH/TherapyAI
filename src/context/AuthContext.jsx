@@ -65,9 +65,12 @@ export function AuthProvider({ children }) {
     return sendEmailVerification(auth.currentUser, actionCodeSettings);
   }
   
-  function reloadUser() {
+  async function reloadUser() {
     if (auth.currentUser) {
-      return reload(auth.currentUser);
+      await reload(auth.currentUser);
+      // Force refresh the ID token to ensure Firestore security rules see updated claims
+      await auth.currentUser.getIdToken(true);
+      return Promise.resolve();
     }
     return Promise.resolve();
   }
@@ -312,7 +315,23 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let previousEmailVerified = null;
+    
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // If user exists and emailVerified status changed from false to true, refresh token
+      if (user && previousEmailVerified === false && user.emailVerified === true) {
+        try {
+          // Force refresh the ID token to update email_verified claim in Firestore security rules
+          await user.getIdToken(true);
+          console.log('Token refreshed after email verification');
+        } catch (error) {
+          console.error('Error refreshing token after email verification:', error);
+        }
+      }
+      
+      // Track email verification status for next comparison
+      previousEmailVerified = user?.emailVerified ?? null;
+      
       setCurrentUser(user);
       setLoading(false);
     });

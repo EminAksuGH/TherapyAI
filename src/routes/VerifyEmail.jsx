@@ -43,6 +43,13 @@ const VerifyEmail = () => {
         // Reload the auth state to update emailVerified status
         if (auth.currentUser) {
           await reload(auth.currentUser);
+          
+          // Force refresh the ID token to update email_verified claim in Firestore security rules
+          // This is critical - without this, Firestore will still see email_verified as false
+          await auth.currentUser.getIdToken(true);
+          
+          // Wait a moment for the token to propagate
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
         
         setVerificationState({
