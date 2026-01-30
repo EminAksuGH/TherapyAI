@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { applyActionCode, getAuth, reload } from 'firebase/auth';
+import { useAuth } from '../context/AuthContext';
 import AuthRedirect from '../components/AuthRedirect';
 import styles from './Auth.module.css';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,20 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = getAuth();
+  const { currentUser } = useAuth();
   const { t } = useTranslation();
+
+  // Handle redirect after email verification
+  useEffect(() => {
+    // Only redirect if verification was successful and we have a verified user
+    if (verificationState.isSuccess && currentUser && currentUser.emailVerified) {
+      // User is logged in and verified, redirect to home/chat
+      const timer = setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [verificationState.isSuccess, currentUser, navigate]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -48,8 +62,8 @@ const VerifyEmail = () => {
           // This is critical - without this, Firestore will still see email_verified as false
           await auth.currentUser.getIdToken(true);
           
-          // Wait a moment for the token to propagate
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Wait a moment for the token and auth state to propagate
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
         
         setVerificationState({
@@ -58,10 +72,13 @@ const VerifyEmail = () => {
           error: null
         });
         
-        // Automatically redirect to login page after 5 seconds
-        setTimeout(() => {
-          navigate('/login?emailVerified=true');
-        }, 5000);
+        // If user is not logged in, redirect to login page after showing success message
+        if (!auth.currentUser) {
+          setTimeout(() => {
+            navigate('/login?emailVerified=true');
+          }, 3000);
+        }
+        // If user is logged in, the redirect will be handled by the useEffect above
       } catch (error) {
         setVerificationState({
           isVerifying: false,
@@ -78,10 +95,10 @@ const VerifyEmail = () => {
         document.body.classList.remove('auth-page');
       }
     };
-  }, [location, navigate, auth]);
+  }, [location, navigate, auth, t]);
 
   return (
-    <AuthRedirect requireEmailVerification={true}>
+    <AuthRedirect requireEmailVerification={true} allowOobCode={true}>
       <div className={styles.authContainer}>
         <div className={styles.authForm}>
           <h2>{t('auth.titles.verifyEmail')}</h2>
@@ -96,6 +113,11 @@ const VerifyEmail = () => {
         {!verificationState.isVerifying && verificationState.isSuccess && (
           <div className={styles.success}>
             {t('auth.messages.verifySuccess')}
+            {currentUser && (
+              <p style={{ marginTop: '10px', fontSize: '0.9em' }}>
+                {t('auth.messages.redirectingToApp') || 'Redirecting to app...'}
+              </p>
+            )}
           </div>
         )}
         
@@ -105,9 +127,11 @@ const VerifyEmail = () => {
           </div>
         )}
         
-        <div className={styles.authLinks}>
-          <Link to="/login">{t('auth.links.backToLogin')}</Link>
-        </div>
+        {!verificationState.isVerifying && !currentUser && (
+          <div className={styles.authLinks}>
+            <Link to="/login">{t('auth.links.backToLogin')}</Link>
+          </div>
+        )}
         </div>
       </div>
     </AuthRedirect>
